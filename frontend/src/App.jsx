@@ -6,7 +6,7 @@ import SafetyCard from './components/SafetyCard';
 import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2 } from 'lucide-react';
 
 // Connect to backend
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function App() {
   const [medicines, setMedicines] = useState([]);
@@ -91,7 +91,10 @@ function App() {
   return (
     <div className="container animate-fade-in">
       <div className="header">
-        <h1>Mediscan Safety</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+          <img src="/logo.png" alt="Mediscan Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', background: 'white', borderRadius: '50%' }} onError={(e) => e.target.style.display='none'} />
+          <h1 style={{ marginBottom: 0 }}>Mediscan Safety</h1>
+        </div>
         <p>Your intelligent medicine companion</p>
       </div>
 
