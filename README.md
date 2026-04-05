@@ -2,6 +2,8 @@
 
 <div align="center">
   <p><strong>An advanced, AI-powered medicine interaction and safety checker designed to make medical information accessible, readable, and incredibly simple.</strong></p>
+
+  <h3>🚀 <a href="https://mediscan-safety.vercel.app/">Try the Live Demo Here!</a></h3>
 </div>
 
 ---
