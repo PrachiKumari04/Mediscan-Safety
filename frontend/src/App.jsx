@@ -73,8 +73,27 @@ function App() {
     if ('speechSynthesis' in window) {
       stopSpeech();
       const utterance = new SpeechSynthesisUtterance(text);
-      if (language === 'Hindi') utterance.lang = 'hi-IN';
-      if (language === 'Marathi') utterance.lang = 'mr-IN';
+      
+      const langMap = {
+        'Hindi': 'hi-IN',
+        'Marathi': 'mr-IN',
+        'Tamil': 'ta-IN',
+        'English': 'en-US'
+      };
+      
+      const targetLang = langMap[language] || 'en-US';
+      utterance.lang = targetLang;
+
+      // Force the browser to use the correct voice if available
+      const voices = window.speechSynthesis.getVoices();
+      let voice = voices.find(v => v.lang.replace('_', '-') === targetLang);
+      if (!voice) {
+        voice = voices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
+      }
+      
+      if (voice) {
+        utterance.voice = voice;
+      }
       
       utterance.onend = () => {
         setIsSpeaking(false);
