@@ -33,17 +33,26 @@ async function extractFromImage(base64Image, mediaType) {
 }
 
 async function analyzeInteractions(drugData, language = 'English') {
-  const getMockData = (errorMessage = "") => ({
-    status: "DANGEROUS",
-    summary: "Mock Mode Fallback (API error: " + errorMessage + "). Based on generic mock logic, these medicines might interact.",
-    alternatives: ["Calpol", "Crocin"],
-    details: drugData.map(d => ({
-      medicine: d.name,
-      composition: d.composition || "Unknown",
-      dosage: "Take as directed",
-      warnings: d.warnings || "No major warnings found."
-    }))
-  });
+  const getMockData = (errorMessage = "") => {
+    let cleanMessage = "Based on basic mock logic, these medicines might interact. (API Error)";
+    if (errorMessage.includes("429") || errorMessage.includes("Quota") || errorMessage.includes("quota")) {
+      cleanMessage = "We are receiving too many requests right now. Please wait 1 minute and try again.";
+    } else if (errorMessage) {
+      cleanMessage = "AI service temporarily unavailable. Please try again later.";
+    }
+
+    return {
+      status: "CAUTION",
+      summary: cleanMessage,
+      alternatives: ["Please consult a doctor"],
+      details: drugData.map(d => ({
+        medicine: d.name,
+        composition: d.composition || "Unknown",
+        dosage: "Take as directed",
+        warnings: d.warnings || "No major warnings found."
+      }))
+    };
+  };
 
   if (isMock) {
     return getMockData("No valid GEMINI_API_KEY provided initially");
