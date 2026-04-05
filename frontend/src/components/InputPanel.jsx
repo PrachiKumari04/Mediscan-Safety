@@ -54,9 +54,9 @@ function InputPanel({ onImageExtracted, onAddManual, loading }) {
           className="btn btn-outline" 
           onClick={() => fileInputRef.current.click()}
           disabled={loading}
-          style={{ flex: 1 }}
+          style={{ flex: 1, padding: '0.4rem' }}
         >
-          <Upload size={18} /> Upload Image
+          <Upload size={18} /> Scan (Medicine or Notes)
         </button>
         <button 
           className="btn btn-outline" 
@@ -75,6 +75,10 @@ function InputPanel({ onImageExtracted, onAddManual, loading }) {
           onChange={handleFileChange}
         />
       </div>
+      
+      <p className="text-xs text-muted mb-6" style={{ marginTop: '-1rem' }}>
+        * Our OCR-based prescription reader uses optical character recognition to read and convert doctors' handwritten notes and medicine images into digital text.
+      </p>
 
       <div className="input-group">
         <label className="input-label">Or enter manually</label>

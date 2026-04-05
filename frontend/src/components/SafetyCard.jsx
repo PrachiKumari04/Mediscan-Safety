@@ -50,7 +50,7 @@ function SafetyCard({ report, onListen, onPause, onStop, isSpeaking, isPaused })
             <h4 className="flex items-center gap-2 m-0" style={{ color: 'var(--success)' }}>
               <Pill size={16} /> Suggested Alternatives
             </h4>
-            <div className="flex gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {report.alternatives.map((alt, i) => (
                 <span key={i} className="suggestion-tag">
                   {alt}
