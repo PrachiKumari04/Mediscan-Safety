@@ -29,7 +29,11 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to extract medicines from image.');
+      if (err.response && err.response.data && err.response.data.error) {
+        alert('Extraction failed: ' + err.response.data.error);
+      } else {
+        alert('Failed to extract medicines from image. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

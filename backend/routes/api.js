@@ -18,7 +18,7 @@ router.post('/extract-medicines', upload.single('image'), async (req, res) => {
     res.json({ medicines });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Extraction failed' });
+    res.status(500).json({ error: error.message || 'Extraction failed' });
   }
 });
 
