@@ -93,7 +93,7 @@ function App() {
       <div className="header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
           <img src="/logo.png" alt="Mediscan Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', background: 'white', borderRadius: '50%' }} onError={(e) => e.target.style.display='none'} />
-          <h1 style={{ marginBottom: 0 }}>Mediscan Safety</h1>
+          <h1 style={{ marginBottom: 0 }}><span style={{ color: 'var(--success)' }}>Medi</span>scan Safety</h1>
         </div>
         <p>Your intelligent medicine companion</p>
       </div>
