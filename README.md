@@ -125,22 +125,4 @@ Accepts a JSON payload:
 ## ⚠️ Disclaimer
 **This application is a Proof of Concept (POC) designed for demonstration and informational purposes only.** The AI-generated interactions and summaries are not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified physician or pharmacist before making any changes to your medication regimen.
 
----
 
-## 💼 LinkedIn Project Descriptions
-
-*Need a quick summary for your resume or LinkedIn profile? Feel free to use one of these combinations:*
-
-**Option 1: Short & Punchy (Great for Headline or Resume Bullet)**
-> Engineered "Mediscan Safety Checker," a full-stack AI web app using Google Gemini API to analyze drug interactions. Built with React and Node.js, featuring OCR prescription scanning, multilingual support, and text-to-speech accessibility to make medical safety data universally readable.
-
-**Option 2: Feature-Focused (Great for the "Projects" section)**
-> Developed a specialized healthcare accessibility application that leverages the Google Gemini Vision and Text APIs to analyze medicinal prescriptions. 
-> • **Core Feature:** Cross-references user inputs (via Voice, Image OCR, or Text) with FDA and RxNav APIs to flag dangerous drug-drug interactions.
-> • **Accessibility:** Distills complex medical jargon into 4+ regional languages with integrated Text-to-Speech (TTS) functionality.
-> • **Tech Stack:** React, Vite, Node.js, Express, Google Gemini SDK, Axios.
-
-**Option 3: Value & Impact Driven (Great for an "Experience" section summary)**
-> Built and deployed Mediscan, an AI-powered safety platform aiming to reduce medication errors among patients. By integrating Google Gemini AI with health databases (RxNav/FDA), the application processes complex pharmacological data and generates simplified, accessible safety profiles in multiple localized languages. 
-
-**Recommended Skills to Tag:** React.js, Full-Stack Web Development, Google Gemini API, Artificial Intelligence (AI), Web Accessibility, Healthcare Technology.
