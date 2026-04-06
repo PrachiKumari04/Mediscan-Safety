@@ -24,9 +24,9 @@ async function extractFromImage(base64Image, mediaType) {
         responseMimeType: "application/json",
       }
     });
-    
+
     return JSON.parse(response.text);
-  } catch(e) {
+  } catch (e) {
     console.warn("API Error during Gemini image extraction.", e.status, e.message);
     if (e.status === 429 || (e.message && e.message.includes('429'))) {
       throw new Error("Google AI Free Tier Limit Reached! Try again in 1 minute, or type the medicines manually.");
@@ -40,11 +40,10 @@ async function extractFromImage(base64Image, mediaType) {
 
 async function analyzeInteractions(drugData, language = 'English') {
   const getMockData = (errorMessage = "") => {
-    let cleanMessage = "Based on basic mock logic, these medicines might interact. (API Error)";
-    if (errorMessage.includes("429") || errorMessage.includes("Quota") || errorMessage.includes("quota")) {
+    const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage || "");
+    let cleanMessage = "AI service temporarily unavailable. Please try again later.";
+    if (errorStr.includes("429") || errorStr.includes("Quota") || errorStr.includes("quota")) {
       cleanMessage = "We are receiving too many requests right now. Please wait 1 minute and try again.";
-    } else if (errorMessage) {
-      cleanMessage = "AI service temporarily unavailable. Please try again later.";
     }
 
     return {
@@ -65,7 +64,7 @@ async function analyzeInteractions(drugData, language = 'English') {
   }
 
   const prompt = `You are a friendly pharmacist talking to someone with no medical background.
-  Analyze these medicines for interactions based on the openFDA data provided:
+  Analyze these medicines for interactions. Use the provided openFDA data if available, but if any information is missing (like composition, dosage, or warnings), use your own medical knowledge to fill in the gaps:
   ${JSON.stringify(drugData, null, 2)}
   
   CRITICAL INSTRUCTIONS:
@@ -75,6 +74,7 @@ async function analyzeInteractions(drugData, language = 'English') {
   4. Classify overall risk as SAFE / CAUTION / DANGEROUS.
   5. For each medicine give: what it is usually for (composition made simple), simple dosage, simple allergy warnings. 
   6. If risky, explain it very simply and suggest 2-3 common Indian alternatives. Always add a short disclaimer to ask a doctor.
+  7. Do NOT explicitly state that data was missing from openFDA. Just provide the expected details using your own knowledge.
   
   Return output STRICTLY as this JSON structure. Do NOT wrap in markdown block.
   {
@@ -96,9 +96,9 @@ async function analyzeInteractions(drugData, language = 'English') {
     });
 
     return JSON.parse(response.text);
-  } catch(e) {
-     console.warn("API Error during Gemini safety check. Falling back to MOCK mode.", e.message);
-     return getMockData(e.message);
+  } catch (e) {
+    console.warn("API Error during Gemini safety check. Falling back to MOCK mode.", e.message);
+    return getMockData(e.message);
   }
 }
 
