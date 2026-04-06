@@ -63,9 +63,18 @@ async function analyzeInteractions(drugData, language = 'English') {
     return getMockData("No valid GEMINI_API_KEY provided initially");
   }
 
-  const prompt = `You are a friendly pharmacist talking to someone with no medical background.
-  Analyze these medicines for interactions. Use the provided openFDA data if available, but if any information is missing (like composition, dosage, or warnings), use your own medical knowledge to fill in the gaps:
-  ${JSON.stringify(drugData, null, 2)}
+  // Clean drugData so that "Not found" strings don't confuse the LLM into thinking that's the literal value
+  const cleanDrugData = drugData.map(d => {
+    const cleanD = { ...d };
+    if (cleanD.composition && cleanD.composition.includes("Unknown") || cleanD.composition.includes("Not found") || cleanD.composition.includes("Error")) delete cleanD.composition;
+    if (cleanD.warnings && cleanD.warnings.includes("Not found")) delete cleanD.warnings;
+    if (cleanD.interactions && cleanD.interactions.includes("Not found")) delete cleanD.interactions;
+    return cleanD;
+  });
+
+  const prompt = `You are a friendly and knowledgeable pharmacist talking to someone with no medical background.
+  Analyze these medicines. I am providing some preliminary database data below, but it may be incomplete or empty.
+  ${JSON.stringify(cleanDrugData, null, 2)}
   
   CRITICAL INSTRUCTIONS:
   1. Translate the ENTIRE output into ${language}. Every single property in the JSON (except the status key) must be in ${language}.
@@ -74,7 +83,8 @@ async function analyzeInteractions(drugData, language = 'English') {
   4. Classify overall risk as SAFE / CAUTION / DANGEROUS.
   5. For each medicine give: what it is usually for (composition made simple), simple dosage, simple allergy warnings. 
   6. If risky, explain it very simply and suggest 2-3 common Indian alternatives. Always add a short disclaimer to ask a doctor.
-  7. Do NOT explicitly state that data was missing from openFDA. Just provide the expected details using your own knowledge.
+  7. CRITICAL: If the provided database data is empty or missing for any medicine, YOU MUST use your own internal medical knowledge to determine and provide the composition, dosage, and warnings. Do not say "I don't know" or "The information I have doesn't tell me". You are an expert pharmacist and you DO know what Eltroxin, Paricel, Amdocal, etc., are.
+  8. Do NOT mention databases, openFDA, or the source of your information. Just provide the facts directly.
   
   Return output STRICTLY as this JSON structure. Do NOT wrap in markdown block.
   {
