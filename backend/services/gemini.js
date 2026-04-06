@@ -86,6 +86,7 @@ async function analyzeInteractions(drugData, language = 'English') {
   6. If risky, explain it very simply and suggest 2-3 common Indian alternatives. Always add a short disclaimer to ask a doctor.
   7. Use your own extensive medical knowledge to provide the composition, dosage, and warnings for each medicine. DO NOT say "I don't know" or "The information provided doesn't say". You know what these medicines are!
   8. Do NOT mention databases, the source of your information, or the fact that data was missing. Just state the facts.
+  9. If a medicine name seems misspelled, incomplete, or if you don't recognize it perfectly (often caused by poor handwriting OCR, e.g., 'Paried' instead of 'Paricel'), use your medical intuition to GUESS the most likely intended medicine based on common Indian drugs. Analyze your best guess and briefly mention that you corrected the spelling.
   
   (Optional context): Here is some preliminary database data. Use it if helpful, but override it with your own knowledge if it is empty, incomplete, or incorrect:
   ${JSON.stringify(cleanDrugData, null, 2)}
