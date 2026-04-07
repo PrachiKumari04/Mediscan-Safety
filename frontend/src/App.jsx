@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import InputPanel from './components/InputPanel';
 import MedicineList from './components/MedicineList';
@@ -15,6 +15,16 @@ function App() {
   const [language, setLanguage] = useState('English');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Pre-load voices for TTS
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
 
   const handleExtraction = async (file) => {
     setLoading(true);
@@ -74,41 +84,64 @@ function App() {
   };
 
   const speakText = (text) => {
-    if ('speechSynthesis' in window) {
-      stopSpeech();
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      const langMap = {
-        'Hindi': 'hi-IN',
-        'Marathi': 'mr-IN',
-        'Tamil': 'ta-IN',
-        'English': 'en-US'
-      };
-      
-      const targetLang = langMap[language] || 'en-US';
-      utterance.lang = targetLang;
+    if (!('speechSynthesis' in window)) {
+      alert("Text to speech is not supported in this browser.");
+      return;
+    }
 
-      // Force the browser to use the correct voice if available
+    stopSpeech();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    const langMap = {
+      'Hindi': 'hi-IN',
+      'Marathi': 'mr-IN',
+      'Tamil': 'ta-IN',
+      'English': 'en-US'
+    };
+    
+    const targetLang = langMap[language] || 'en-US';
+    utterance.lang = targetLang;
+    utterance.volume = 1;
+    utterance.rate = 0.9; // Slightly slower for better clarity in regional languages
+    utterance.pitch = 1;
+
+    // Helper to find and set the best voice
+    const setVoice = () => {
       const voices = window.speechSynthesis.getVoices();
+      // Try exact match first
       let voice = voices.find(v => v.lang.replace('_', '-') === targetLang);
+      
+      // Try language code match (e.g., 'mr' for Marathi)
       if (!voice) {
         voice = voices.find(v => v.lang.startsWith(targetLang.split('-')[0]));
       }
       
+      // For regional languages, sometimes Google provides specific high-quality voices
+      if (!voice && targetLang === 'hi-IN') voice = voices.find(v => v.name.includes("Hindi"));
+      if (!voice && targetLang === 'mr-IN') voice = voices.find(v => v.name.includes("Marathi"));
+      if (!voice && targetLang === 'ta-IN') voice = voices.find(v => v.name.includes("Tamil"));
+
       if (voice) {
         utterance.voice = voice;
       }
-      
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        setIsPaused(false);
-      };
-      
-      setIsSpeaking(true);
-      window.speechSynthesis.speak(utterance);
-    } else {
-      alert("Text to speech is not supported in this browser.");
-    }
+    };
+
+    setVoice();
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+
+    utterance.onerror = (event) => {
+      console.error("Speech Error:", event);
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+    
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
   };
 
   return (
