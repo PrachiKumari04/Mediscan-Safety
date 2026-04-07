@@ -1,4 +1,5 @@
 const Groq = require('groq-sdk');
+const { analyzeInteractionsGemini } = require('./gemini');
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
@@ -16,7 +17,7 @@ async function analyzeInteractions(drugData, language = 'English') {
     let noWarnings = "No major warnings found.";
 
     if (errorStr.includes("429") || errorStr.includes("Limit") || errorStr.includes("limit")) {
-      cleanMessage = "Groq API limit reached. Please wait a moment and try again.";
+      cleanMessage = "Groq API limit reached. Trying Gemini fallback...";
     }
 
     if (language === 'Hindi') {
@@ -53,7 +54,12 @@ async function analyzeInteractions(drugData, language = 'English') {
   };
 
   if (!process.env.GROQ_API_KEY) {
-    return getMockData("No GROQ_API_KEY provided in .env");
+    console.log("🔄 Groq key missing. Trying Gemini fallback...");
+    try {
+      return await analyzeInteractionsGemini(drugData, language);
+    } catch (e) {
+      return getMockData("No GROQ_API_KEY provided in .env");
+    }
   }
 
   // Clean drugData
@@ -109,7 +115,16 @@ async function analyzeInteractions(drugData, language = 'English') {
     const result = JSON.parse(chatCompletion.choices[0].message.content);
     return result;
   } catch (e) {
-    console.warn("Groq API Error during safety check. Falling back to MOCK mode.", e.message);
+    if (e.status === 429 || (e.message && (e.message.includes('429') || e.message.includes('Limit')))) {
+      console.warn("🔄 Groq limit reached. Switching to Gemini analysis fallback...");
+      try {
+        return await analyzeInteractionsGemini(drugData, language);
+      } catch (geminiError) {
+        console.error("Both Groq and Gemini Analysis failed.", geminiError.message);
+        return getMockData(e.message);
+      }
+    }
+    console.warn("Groq API Error. Falling back to mock data.", e.message);
     return getMockData(e.message);
   }
 }

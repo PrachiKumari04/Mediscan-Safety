@@ -9,24 +9,25 @@
 
 ---
 
-## 🌟 The "Dual-Engine" Innovation
-Mediscan is built on a high-availability **Dual-Engine architecture** that eliminates API bottle-necks and ensures professional-grade medical reasoning.
+## 🛡️ Triple-Engine Resilience
+Mediscan now features a **Bidirectional Fallback system** that makes it almost impossible for the app to fail due to free-tier rate limits.
 
 ```mermaid
 graph TD
-    A[User Input: Photo/Voice/Text] --> B{Task Distributor}
-    B -->|Vision Task| C[Google Gemini 2.0 Flash]
-    B -->|Reasoning Task| D[Groq: Llama-3.3-70B]
-    C -->|Drug Names| E[Mediscan Core]
-    D -->|Safety Analysis| E
-    E --> F[Standardized NIH/FDA Data]
-    F --> G[Final Patient-Friendly Report]
+    A[User Input] --> B{Task Coordinator}
+    B -->|OCR Task| C[Gemini 2.0 Flash]
+    C -- 429 Error --> D[Groq: Llama-3.2-Vision Fallback]
+    B -->|Safety Task| E[Groq: Llama-3.3-70B]
+    E -- 429 Error --> F[Gemini: Text-Only Fallback]
+    D --> G[Standardized Med Report]
+    F --> G
 ```
 
 ### 🧠 Why This Matters?
-By splitting **Vision** and **Reasoning**, we achieve:
-*   **High Resilience**: If one provider (Gemini) hits its free-tier limit, the other (Groq) continues to provide safety checks.
-*   **Lightning Speed**: Groq generates detailed text analysis in milliseconds, while Gemini focuses exclusively on the complex task of OCR.
+By using **two providers (Google & Groq)** and **three intelligence models**, we ensure:
+*   **Zero Downtime**: If Gemini hits an OCR limit, Groq Vision takes over instantly.
+*   **Fail-Safe Analysis**: If Groq is busy, Gemini's high-capacity text model provides the safety check.
+*   **No Mock Data**: You'll always get a real AI response instead of a generic "too many requests" message.
 
 ---
 
