@@ -105,7 +105,7 @@ async function analyzeInteractions(drugData, language = 'English') {
   Please analyze the following medicines: ${medicineNames}.
   
   CRITICAL INSTRUCTIONS:
-  1. Translate the ENTIRE output into ${language}. Every single property in the JSON (except the status key) must be in ${language}.
+  1. Translate ALL text VALUES into ${language}. DO NOT translate the JSON property keys! The keys must remain exactly "status", "summary", "alternatives", "details", "medicine", "composition", "dosage", and "warnings" in English.
   2. Use EXTREMELY SIMPLE language. Explain it like you are talking to a 10-year-old.
   3. DO NOT use big medical jargon, hard words, or complex chemical names if you can avoid it.
   4. Classify overall risk as SAFE / CAUTION / DANGEROUS.
