@@ -41,20 +41,47 @@ async function extractFromImage(base64Image, mediaType) {
 async function analyzeInteractions(drugData, language = 'English') {
   const getMockData = (errorMessage = "") => {
     const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage || "");
+    
+    // Default English strings
     let cleanMessage = "AI service temporarily unavailable. Please try again later.";
+    let consultDoctor = "Please consult a doctor";
+    let takeAsDirected = "Take as directed";
+    let unknownComp = "Unknown";
+    let noWarnings = "No major warnings found.";
+
     if (errorStr.includes("429") || errorStr.includes("Quota") || errorStr.includes("quota")) {
       cleanMessage = "We are receiving too many requests right now. Please wait 1 minute and try again.";
+    }
+
+    if (language === 'Hindi') {
+      cleanMessage = (errorStr.includes("429") || errorStr.includes("quota")) ? "अभी बहुत अधिक अनुरोध आ रहे हैं। कृपया 1 मिनट प्रतीक्षा करें और फिर से प्रयास करें।" : "AI सेवा अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।";
+      consultDoctor = "कृपया डॉक्टर से सलाह लें";
+      takeAsDirected = "निर्देशानुसार लें";
+      unknownComp = "अज्ञात";
+      noWarnings = "कोई बड़ी चेतावनी नहीं मिली।";
+    } else if (language === 'Marathi') {
+      cleanMessage = (errorStr.includes("429") || errorStr.includes("quota")) ? "सध्या खूप विनंत्या येत आहेत. कृपया १ मिनिट प्रतीक्षा करा आणि पुन्हा प्रयत्न करा." : "AI सेवा तात्पुरती अनुपलब्ध आहे. कृपया नंतर पुन्हा प्रयत्न करा.";
+      consultDoctor = "कृपया डॉक्टरांचा सल्ला घ्या";
+      takeAsDirected = "निर्देशानुसार घ्या";
+      unknownComp = "अज्ञात";
+      noWarnings = "कोणतेही मोठे इशारे आढळले नाहीत.";
+    } else if (language === 'Tamil') {
+      cleanMessage = (errorStr.includes("429") || errorStr.includes("quota")) ? "தற்போது பல கோரிக்கைகள் வருகின்றன. 1 நிமிடம் காத்திருந்து மீண்டும் முயற்சிக்கவும்." : "AI சேவை தற்காலிகமாக கிடைக்கவில்லை. பின்னர் மீண்டும் முயற்சிக்கவும்.";
+      consultDoctor = "தயவுசெய்து மருத்துவரை அணுகவும்";
+      takeAsDirected = "இயக்கப்பட்டபடி எடுக்கவும்";
+      unknownComp = "தெரியவில்லை";
+      noWarnings = "பெரிய எச்சரிக்கைகள் எதுவும் கிடைக்கவில்லை.";
     }
 
     return {
       status: "CAUTION",
       summary: cleanMessage,
-      alternatives: ["Please consult a doctor"],
+      alternatives: [consultDoctor],
       details: drugData.map(d => ({
         medicine: d.name,
-        composition: d.composition || "Unknown",
-        dosage: "Take as directed",
-        warnings: d.warnings || "No major warnings found."
+        composition: d.composition || unknownComp,
+        dosage: takeAsDirected,
+        warnings: d.warnings || noWarnings
       }))
     };
   };
