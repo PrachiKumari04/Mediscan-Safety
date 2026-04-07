@@ -114,7 +114,6 @@ async function analyzeInteractions(drugData, language = 'English') {
   7. Use your own extensive medical knowledge to provide the composition, dosage, and warnings for each medicine. DO NOT say "I don't know" or "The information provided doesn't say". You know what these medicines are!
   8. Do NOT mention databases, the source of your information, or the fact that data was missing. Just state the facts.
   9. If a medicine name seems misspelled, incomplete, or if you don't recognize it perfectly (often caused by poor handwriting OCR, e.g., 'Paried' instead of 'Paricel'), use your medical intuition to GUESS the most likely intended medicine based on common Indian drugs. Analyze your best guess and briefly mention that you corrected the spelling.
-  10. CRITICAL: Do NOT use literal newlines or line breaks inside your JSON strings. Use normal spaces instead. Ensure the output is 100% valid, strictly parsed JSON.
   
   (Optional context): Here is some preliminary database data. Use it if helpful, but override it with your own knowledge if it is empty, incomplete, or incorrect:
   ${JSON.stringify(cleanDrugData, null, 2)}
@@ -139,10 +138,8 @@ async function analyzeInteractions(drugData, language = 'English') {
     });
 
     let rawText = response.text;
-    // Remove control characters and literal newlines that break JSON.parse
-    rawText = rawText.replace(/[\n\r\t]+/g, ' '); 
-    // Also remove any other problematic control characters (0x00-0x1F) except spaces
-    rawText = rawText.replace(/[\x00-\x1F]+/g, '');
+    // Remove literal newlines/tabs that break JSON.parse in strings
+    rawText = rawText.replace(/[\n\r\t]+/g, ' ');
 
     return JSON.parse(rawText);
   } catch (e) {
