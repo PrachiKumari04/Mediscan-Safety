@@ -170,7 +170,19 @@ function App() {
           </button>
           <SafetyCard 
             report={report} 
-            onListen={() => speakText(report.summary)} 
+            onListen={() => {
+              const statusPrefix = language === 'Hindi' ? `सेफ्टी स्टेटस: ${report.status}. ` :
+                                 language === 'Marathi' ? `सुरक्षितता स्थिती: ${report.status}. ` :
+                                 language === 'Tamil' ? `பாதுகாப்பு நிலை: ${report.status}. ` :
+                                 `Safety Status: ${report.status}. `;
+
+              const summaryPrefix = language === 'Hindi' ? `इंटरैक्शन और सारांश: ` :
+                                  language === 'Marathi' ? `परस्पर संवाद आणि सारांश: ` :
+                                  language === 'Tamil' ? `தொடர்புகள் மற்றும் சுருக்கம்: ` :
+                                  `Interactions and Summary: `;
+              
+              speakText(`${statusPrefix}${summaryPrefix}${report.summary}`);
+            }} 
             onPause={pauseSpeech}
             onStop={stopSpeech}
             isSpeaking={isSpeaking}
