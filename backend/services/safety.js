@@ -1,6 +1,6 @@
 const { getDrugDetails } = require('./rxnav');
 const { getFDAWarnings } = require('./openfda');
-const { analyzeInteractions } = require('./gemini');
+const { analyzeInteractions } = require('./groq');
 
 async function checkSafety(medicines, language = 'English') {
   const drugData = [];
