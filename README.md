@@ -1,115 +1,100 @@
 # 🩺 Mediscan Safety Checker
+> **Intelligent Medicine Companion powered by Dual-Engine AI.**
 
 <div align="center">
-  <p><strong>An advanced, AI-powered medicine interaction and safety checker designed to make medical information accessible, readable, and incredibly simple.</strong></p>
-
-  <h3>🚀 <a href="https://mediscan-safety.vercel.app/">Try the Live Demo Here!</a></h3>
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
+  <img src="https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-blue.svg?style=flat-square" alt="Powered By Gemini & Groq">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License MIT">
 </div>
 
 ---
 
-## 🌟 Overview (Dual-Engine Approach)
+## 🌟 The "Dual-Engine" Innovation
+Mediscan is built on a high-availability **Dual-Engine architecture** that eliminates API bottle-necks and ensures professional-grade medical reasoning.
 
-Mediscan Safety Checker is an intelligent healthcare companion application. To ensure maximum reliability and stay within free-tier limits, this project uses a **Dual-Engine AI architecture**:
+```mermaid
+graph TD
+    A[User Input: Photo/Voice/Text] --> B{Task Distributor}
+    B -->|Vision Task| C[Google Gemini 2.0 Flash]
+    B -->|Reasoning Task| D[Groq: Llama-3.3-70B]
+    C -->|Drug Names| E[Mediscan Core]
+    D -->|Safety Analysis| E
+    E --> F[Standardized NIH/FDA Data]
+    F --> G[Final Patient-Friendly Report]
+```
 
-1.  **Vision Engine (Google Gemini 2.0 Flash)**: Specialized in reading handwritten prescriptions, medicine strips, and pill packets with high accuracy.
-2.  **Reasoning Engine (Groq / Llama-3.3-70B)**: An ultra-fast text model that performs deep safety analysis, simplifies medical jargon, and handles multi-language translations instantly.
+### 🧠 Why This Matters?
+By splitting **Vision** and **Reasoning**, we achieve:
+*   **High Resilience**: If one provider (Gemini) hits its free-tier limit, the other (Groq) continues to provide safety checks.
+*   **Lightning Speed**: Groq generates detailed text analysis in milliseconds, while Gemini focuses exclusively on the complex task of OCR.
 
-By splitting the workload, Mediscan provides a resilient, high-speed experience while minimizing API rate-limit pressure.
+---
 
 ## ✨ Key Features
 
-### 📸 OCR Prescription & Image Scanning
-- Upload images of **doctor's handwritten notes**, medicine strips, or pill bottles.
-- Powered by **Google Gemini 2.0 Flash** to instantly scan and extract medicine names into digital text.
+### 📸 Pro-Grade OCR Scanning
+*   **Gemini 2.0 Flash Vision**: Deciphers messy doctor handwriting, blurry medicine strips, and complex labels.
+*   **Automatic Extraction**: Converts any photo into a clean list of medicines instantly.
 
-### 🎤 Voice & Manual Input
-- Native browser speech-to-text integration for hands-free entry.
-- Simple manual entry system for power users.
+### 🛡️ Deep Safety Analytics
+*   **Live Database Connection**: Pings **RxNav** (NIH) and **openFDA** for real-time drug composition and boxed warnings.
+*   **Llama-3.3 Reasoning**: Analyzes drug-drug interactions with the medical intuition of a trained pharmacist.
 
-### 🛡️ Real-time Safety Analytics
-- Concurrently pings the **RxNav API** (National Institutes of Health) to parse chemical constituents.
-- Concurrently pings the **openFDA API** to aggregate critical boxed warnings and interactions.
+### 🌐 Patient-Centric Design
+*   **Simplicity first**: Explains complex pharmacology in "10-year-old" language.
+*   **Multilingual Support**: Available in **English, Hindi, Marathi, and Tamil**.
+*   **Accessibility**: Built-in **Text-to-Speech (TTS)** with play/pause/stop controls for elderly or visually impaired users.
 
-### 🧠 Groq-Powered Safety Reasoning
-- Uses **Llama-3.3-70B-Versatile** via Groq to analyze complex drug-drug interactions.
-- Classifies medication combinations into: **SAFE**, **CAUTION**, or **DANGEROUS**.
-- Suggests 2-3 common local (Indian) medication alternatives if a conflict is spotted.
-
-### 🔊 Multilingual Text-to-Speech (TTS)
-- Translates medical output into simplified regional languages (**English, Hindi, Marathi, Tamil**).
-- Complete with play, pause, and stop audio controls for accessibility.
+### 🇮🇳 Indian Context Localization
+*   **Local Alternatives**: Suggests 2-3 common Indian medication alternatives if a conflict is detected.
+*   **Self-Correction**: Automatically corrects misspelled medicine names using medical context.
 
 ---
 
 ## 🛠️ Technology Stack
 
-**Frontend:**
-- **React.js** + **Vite**
-- **Vanilla CSS** (Glassmorphism design system)
-- **Lucide React** (Clinical iconography)
-
-**Backend:**
-- **Node.js** + **Express.js** 
-- **@google/genai** (Gemini Vision)
-- **groq-sdk** (Llama-3.3 Reasoning)
-- **Axios** (FDA and NIH API communication)
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend** | React + Vite | Blazing fast HMR and optimized builds. |
+| **Styling** | Vanilla CSS | Custom Glassmorphism clinical theme. |
+| **Vision AI** | Gemini 2.0 Flash | Best-in-class vision for OCR and image reading. |
+| **Reasoning AI** | Groq (Llama-3.3) | State-of-the-art token throughput and speed. |
+| **Logic** | Node.js + Express | Orchestrates AI and external medical APIs. |
 
 ---
 
-## 🚀 Setup & Installation
+## 🚀 Speed Run Setup
 
-### Prerequisites
-- [Node.js](https://nodejs.org/en/) (v16.0 or higher)
-- A **Google Gemini API Key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
-- A **Groq API Key** from [Groq Console](https://console.groq.com/).
+### 1. Requirements
+*   A **Google Gemini Key** ([Google AI Studio](https://aistudio.google.com/app/apikey))
+*   A **Groq API Key** ([Groq Console](https://console.groq.com/))
 
-### 1. Backend Setup
+### 2. Quick Install
 ```bash
-cd backend
-npm install
+# Clone and install backend
+cd backend && npm install
+
+# Clone and install frontend
+cd ../frontend && npm install
 ```
 
-Create a `.env` file in the `backend` folder:
+### 3. Configure `.env`
+Create a `.env` in the `backend/` folder:
 ```env
-GEMINI_API_KEY=your_google_gemini_key
+GEMINI_API_KEY=your_gemini_key
 GROQ_API_KEY=your_groq_key
-PORT=5000
 ```
 
-**Verify the Integration:**
-Run the dual-engine test script to ensure both AI providers are configured correctly:
+### 4. Verify & Launch
+Run the **Dual-Engine Test** to ensure everything is working:
 ```bash
-node test-dual-engine.js
+node backend/test-dual-engine.js
 ```
-
-Start the server:
-```bash
-node server.js
-```
-
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-## 📚 API Reference (Internal)
-
-### `POST /api/extract-medicines`
-- **Engine:** Google Gemini 2.0 Flash
-- **Returns:** JSON array of extracted medicine names.
-
-### `POST /api/check-safety`
-- **Engine:** Groq (Llama-3.3-70B)
-- **Mechanism:** Aggregates RxNav + FDA data and prompts the reasoning model for a simplified safety report.
+Then start both servers with `npm run dev` in their respective folders.
 
 ---
 
 ## ⚠️ Disclaimer
-**This application is a Proof of Concept (POC) designed for demonstration purposes only.** AI-generated interactions are NOT a substitute for professional medical advice. Always consult a qualified physician or pharmacist before changing your medication.
+**For Informational Purposes Only.** Mediscan is an AI Proof of Concept (POC). **NEVER** use this as a substitute for professional medical advice. Always consult a doctor before taking any medication.
 
 
