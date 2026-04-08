@@ -43,7 +43,7 @@ async function analyzeInteractions(drugData, language = 'English') {
     return {
       status: "CAUTION",
       summary: cleanMessage,
-      alternatives: [consultDoctor],
+      alternatives: [{ name: consultDoctor, type: "Notice", reason: "AI service connection error" }],
       details: drugData.map(d => ({
         medicine: d.name,
         composition: d.composition || unknownComp,
@@ -73,28 +73,31 @@ async function analyzeInteractions(drugData, language = 'English') {
 
   const medicineNames = drugData.map(d => d.name).join(", ");
 
-  const prompt = `You are an expert, friendly pharmacist talking to a patient with no medical background.
+  const prompt = `You are a highly experienced Indian Pharmacist and Safety Expert.
   Please analyze the following medicines: ${medicineNames}.
   
   CRITICAL INSTRUCTIONS:
-  1. Translate ALL text VALUES into ${language}. DO NOT translate the JSON property keys! The keys must remain exactly "status", "summary", "alternatives", "details", "medicine", "composition", "dosage", and "warnings" in English.
-  2. Use EXTREMELY SIMPLE language. Explain it like you are talking to a 10-year-old.
-  3. DO NOT use big medical jargon, hard words, or complex chemical names if you can avoid it.
-  4. Classify overall risk as SAFE / CAUTION / DANGEROUS.
-  5. For each medicine give: what it is usually for (composition made simple), simple dosage, simple allergy warnings. 
-  6. If risky, explain it very simply and suggest 2-3 common Indian alternatives. Always add a short disclaimer to ask a doctor.
-  7. Use your own extensive medical knowledge to provide the composition, dosage, and warnings for each medicine. DO NOT say "I don't know" or "The information provided doesn't say". You know what these medicines are!
-  8. Do NOT mention databases, the source of your information, or the fact that data was missing. Just state the facts.
-  9. If a medicine name seems misspelled, incomplete, or if you don't recognize it perfectly, use your medical intuition to GUESS the most likely intended medicine based on common Indian drugs. Analyze your best guess and briefly mention that you corrected the spelling.
+  1. Translate ALL text VALUES into ${language}. DO NOT translate the JSON property keys!
+  2. Use EXTREMELY SIMPLE language (10-year-old level).
+  3. Classify overall risk as SAFE / CAUTION / DANGEROUS.
+  4. For each medicine: simple composition, dosage, and allergy warnings. 
+  5. SUGGESTED ALTERNATIVES: This is the most important part. Identify 2-3 TRULY BEST choices for the patient. 
+     - Focus on "Generic Equivalents" (same salt, lower price) or "Safer Alternatives" (different salt, fewer side effects).
+     - Provide a clear reason WHY it is better.
+     - Ensure these are common in India.
+  6. Use your own knowledge. DO NOT say "I don't know". 
+  7. If medicine name is misspelled, GUESS the most likely Indian drug and analyze it. Mention you corrected the name.
   
-  (Optional context): Here is some preliminary database data. Use it if helpful, but override it with your own knowledge if it is empty, incomplete, or incorrect:
+  (Optional context):
   ${JSON.stringify(cleanDrugData, null, 2)}
   
-  Return output STRICTLY as this JSON structure. Do NOT wrap in markdown block.
+  Return output STRICTLY as this JSON structure:
   {
     "status": "SAFE|CAUTION|DANGEROUS",
     "summary": "Plain language explanation in ${language}",
-    "alternatives": ["Name 1", "Name 2"],
+    "alternatives": [
+      { "name": "Medicine Name", "type": "Generic Equivalent | Safer Alternative", "reason": "Specific reason why this is a best choice in ${language}" }
+    ],
     "details": [
        { "medicine": "Name", "composition": "...", "dosage": "...", "warnings": "..." }
     ]

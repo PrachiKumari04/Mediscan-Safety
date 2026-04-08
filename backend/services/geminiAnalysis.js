@@ -11,8 +11,18 @@ async function analyzeInteractionsGemini(drugData, language = 'English') {
   if (isMock) throw new Error("Mock Mode: API Key missing");
 
   const medicineNames = drugData.map(d => d.name).join(", ");
-  const prompt = `You are an expert, friendly pharmacist. Analyze: ${medicineNames}.
-  Language: ${language}. Return JSON: { "status": "SAFE|CAUTION|DANGEROUS", "summary": "plain explanation", "alternatives": [], "details": [] }`;
+  const prompt = `You are a highly experienced Indian Pharmacist. Analyze: ${medicineNames}.
+  Language: ${language}. 
+  Return JSON: { 
+    "status": "SAFE|CAUTION|DANGEROUS", 
+    "summary": "plain explanation", 
+    "alternatives": [
+      { "name": "Name", "type": "Generic Equivalent|Safer Alternative", "reason": "why in ${language}" }
+    ], 
+    "details": [
+      { "medicine": "Name", "composition": "...", "dosage": "...", "warnings": "..." }
+    ] 
+  }`;
 
   try {
     const response = await ai.models.generateContent({

@@ -172,7 +172,6 @@ function App() {
     <div className="container animate-fade-in">
       <div className="header">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-          <img src="/logo.png" alt="Mediscan Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', background: 'white', borderRadius: '50%' }} onError={(e) => e.target.style.display='none'} />
           <h1 style={{ marginBottom: 0 }}><span style={{ color: 'var(--success)' }}>Medi</span>scan Safety</h1>
         </div>
         <p>Your intelligent medicine companion</p>
@@ -240,7 +239,41 @@ function App() {
                                   language === 'Tamil' ? `தொடர்புகள் மற்றும் சுருக்கம்: ` :
                                   `Interactions and Summary: `;
               
-              speakText(`${statusPrefix}${summaryPrefix}${report.summary}`);
+              let fullTextToSpeak = `${statusPrefix}${summaryPrefix}${report.summary}. `;
+              
+              if (report.details && report.details.length > 0) {
+                 const detailsPrefix = language === 'Hindi' ? `दवाओं का विवरण: ` :
+                                     language === 'Marathi' ? `औषधांचा तपशील: ` :
+                                     language === 'Tamil' ? `மருந்துகளின் விவரங்கள்: ` :
+                                     `Medicine Details: `;
+                 fullTextToSpeak += detailsPrefix;
+                 report.details.forEach(d => {
+                   fullTextToSpeak += `${d.medicine}. `;
+                   fullTextToSpeak += `${d.composition}. `;
+                   fullTextToSpeak += `${d.dosage}. `;
+                   fullTextToSpeak += `${d.warnings}. `;
+                 });
+              }
+
+              if (report.alternatives && report.alternatives.length > 0) {
+                 const altPrefix = language === 'Hindi' ? `सुझाए गए विकल्प: ` :
+                                   language === 'Marathi' ? `सुचविलेले पर्याय: ` :
+                                   language === 'Tamil' ? `பரிந்துரைக்கப்பட்ட மாற்றுகள்: ` :
+                                   `Suggested Alternatives: `;
+                 fullTextToSpeak += altPrefix;
+                 
+                 report.alternatives.forEach(alt => {
+                   const name = typeof alt === 'string' ? alt : alt.name;
+                   const type = typeof alt === 'string' ? "" : alt.type;
+                   const reason = typeof alt === 'string' ? "" : alt.reason;
+                   
+                   fullTextToSpeak += `${name}. `;
+                   if (type) fullTextToSpeak += `${type}. `;
+                   if (reason) fullTextToSpeak += `${reason}. `;
+                 });
+              }
+
+              speakText(fullTextToSpeak);
             }} 
             onPause={pauseSpeech}
             onStop={stopSpeech}

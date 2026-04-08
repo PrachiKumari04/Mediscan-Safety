@@ -50,12 +50,23 @@ function SafetyCard({ report, onListen, onPause, onStop, isSpeaking, isPaused })
             <h4 className="flex items-center gap-2 m-0" style={{ color: 'var(--success)' }}>
               <Pill size={16} /> Suggested Alternatives
             </h4>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {report.alternatives.map((alt, i) => (
-                <span key={i} className="suggestion-tag">
-                  {alt}
-                </span>
-              ))}
+            <div className="mt-4">
+              {report.alternatives.map((alt, i) => {
+                // Handle both new object format and legacy string format
+                const name = typeof alt === 'string' ? alt : alt.name;
+                const type = typeof alt === 'string' ? null : alt.type;
+                const reason = typeof alt === 'string' ? null : alt.reason;
+
+                return (
+                  <div key={i} className="suggestion-tag flex flex-col items-start gap-1">
+                    <div className="flex items-center justify-between w-full">
+                      <span style={{ fontWeight: 600 }}>{name}</span>
+                      {type && <span className="alt-type">{type}</span>}
+                    </div>
+                    {reason && <span className="alt-reason">{reason}</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
