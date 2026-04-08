@@ -155,24 +155,4 @@ async function refineOcrResultsGroq(rawOcrText) {
   return Array.isArray(content) ? content : (content.medicines || ["Unknown Medicine"]);
 }
 
-async function analyzeInteractionsGemini(drugData, language = 'English') {
-  if (isMock) throw new Error("Mock Mode: API Key missing");
-
-  const medicineNames = drugData.map(d => d.name).join(", ");
-  const prompt = `You are an expert, friendly pharmacist. Analyze: ${medicineNames}.
-  Language: ${language}. Return JSON: { "status": "SAFE|CAUTION|DANGEROUS", "summary": "plain explanation", "alternatives": [], "details": [] }`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text);
-  } catch (e) {
-    console.error("Gemini Analysis Fallback Error:", e.message);
-    throw e;
-  }
-}
-
-module.exports = { extractFromImage, analyzeInteractionsGemini };
+module.exports = { extractFromImage };

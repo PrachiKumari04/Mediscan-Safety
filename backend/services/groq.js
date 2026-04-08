@@ -1,5 +1,5 @@
 const Groq = require('groq-sdk');
-const { analyzeInteractionsGemini } = require('./gemini');
+const { analyzeInteractionsGemini } = require('./geminiAnalysis');
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
