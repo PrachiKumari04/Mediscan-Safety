@@ -3,12 +3,10 @@
 
 <div align="center">
 
-[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-0284c7?style=for-the-badge&logo=vercel&logoColor=white)](https://mediscan-safety.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-0284c7?style=for-the-badge&logo=vercel&logoColor=white)]
 
 <br>
 
-![Powered By Gemini & Groq](https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-0284c7.svg?style=flat-square)
-![License MIT](https://img.shields.io/badge/License-MIT-d97706.svg?style=flat-square)
 
 </div>
 
