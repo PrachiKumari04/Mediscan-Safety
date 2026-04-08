@@ -16,19 +16,23 @@ async function extractFromImage(base64Image, mediaType) {
   console.log("💎 Attempting Gemini 2.0 Flash Vision...");
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Note: Increased compatibility for vision tasks
+      model: 'gemini-2.0-flash', // Upgraded to 2.0 Flash for superior vision and OCR
       contents: [
         {
           role: "user",
           parts: [
             { inlineData: { data: base64Image, mimeType: mediaType } },
-            { text: "Extract all medicine brand and generic names. Return exactly JSON array of strings: [\"Name A\", \"Name B\"]." }
+            { text: "System: You are an expert medical vision assistant.\nTask: Extract all medicine brand and generic names visible in this image. Return ONLY a JSON array of strings: [\"Name A\", \"Name B\"]. If no medicine is found, return []." }
           ]
         }
       ],
-      config: { responseMimeType: "application/json" }
+      config: { 
+        responseMimeType: "application/json",
+        temperature: 0 // Keep it deterministic for extraction
+      }
     });
-    return { medicines: JSON.parse(response.text), method: "Gemini Vision" };
+    const medicines = JSON.parse(response.text);
+    return { medicines, method: "Gemini 2.0 Vision" };
   } catch (e) {
     console.warn("⚠️ Gemini Vision failed:", e.message);
     const isLocationError = e.message?.includes("location") || e.status === 400;
@@ -89,11 +93,16 @@ async function refineOcrResults(rawOcrText) {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { responseMimeType: "application/json" }
+      config: { 
+        responseMimeType: "application/json",
+        temperature: 0.1 
+      }
     });
-    return JSON.parse(response.text);
+    const result = JSON.parse(response.text);
+    // Handle cases where AI returns { "medicines": [...] } instead of raw array
+    return Array.isArray(result) ? result : (result.medicines || ["Unknown Medicine"]);
   } catch (e) {
     console.warn("⚠️ Gemini Refinement failed, trying Groq fallback...");
     try {

@@ -1,3 +1,4 @@
+
 const Groq = require('groq-sdk');
 
 const groq = new Groq({
@@ -11,16 +12,16 @@ async function extractFromImageGroq(base64Image, mediaType) {
 
   try {
     const dataUri = `data:${mediaType};base64,${base64Image}`;
-    
+
     const chatCompletion = await groq.chat.completions.create({
-      model: "llama-3.2-11b-vision-preview",
+      model: "llama-3.2-11b-vision-preview", // Robust vision model for medical labels
       messages: [
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Extract all medicine brand and generic names from this photo of tablet, strip, or handwritten prescription. Return ONLY an exact JSON array of strings e.g. [\"Medicine A\", \"Medicine B\"]. Do not add any conversational text."
+              text: "System: You are an expert medical OCR assistant. \nTask: Extract all medicine brand names and generic names from this image. \nInstruction: Return ONLY a JSON array of strings e.g. [\"Paracetamol\", \"Metformin\"]. No chat or markdown."
             },
             {
               type: "image_url",
@@ -31,11 +32,11 @@ async function extractFromImageGroq(base64Image, mediaType) {
           ]
         }
       ],
-      response_format: { type: "json_object" } // Optional, but helps Groq
+      response_format: { type: "json_object" }
     });
 
     const content = chatCompletion.choices[0].message.content;
-    
+
     // Attempt to parse JSON. Sometimes LLMs return { "medicines": [...] } or just [...]
     try {
       const parsed = JSON.parse(content);
