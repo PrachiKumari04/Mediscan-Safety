@@ -32,34 +32,45 @@ function normalizeMedicines(data) {
   return ["Unknown Medicine"];
 }
 
+const { prepareImageForAI } = require('./image');
+
 async function extractFromImage(base64Image, mediaType) {
   if (isMock) return { medicines: ["Paracetamol", "Ibuprofen"], method: "Mock Data" };
+
+  // OPTIMIZATION: Compress and sharpen image before sending to any API
+  // This helps avoid 400 errors from oversized payloads and improves AI accuracy.
+  const optimizedBase64 = await prepareImageForAI(base64Image);
+  let lastError = "AI Busy";
 
   // 1st PRIORITY: Gemini 2.0 Flash (Vision)
   console.log("💎 Attempting Gemini 2.0 Flash Vision...");
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash', // Upgraded to 2.0 Flash for superior vision and OCR
+      model: 'gemini-2.0-flash',
       contents: [
         {
           role: "user",
           parts: [
-            { inlineData: { data: base64Image, mimeType: mediaType } },
+            { inlineData: { data: optimizedBase64, mimeType: 'image/jpeg' } },
             { text: "System: You are an expert medical vision assistant.\nTask: Extract all medicine brand and generic names visible in this image. Return ONLY a JSON array of strings: [\"Name A\", \"Name B\"]. If no medicine is found, return []." }
           ]
         }
       ],
       config: { 
         responseMimeType: "application/json",
-        temperature: 0 // Keep it deterministic for extraction
+        temperature: 0 
       }
     });
-    const medicines = normalizeMedicines(rawResult);
-    console.log(`✅ Gemini 2.0 Extraction Success: ${medicines.length} found.`);
-    return { medicines, method: "Gemini 2.0 Vision" };
+
+    if (response) {
+      const rawResult = JSON.parse(response.text);
+      const medicines = normalizeMedicines(rawResult);
+      console.log(`✅ Gemini 2.0 Extraction Success: ${medicines.length} found.`);
+      return { medicines, method: "Gemini 2.0 Vision" };
+    }
   } catch (e) {
-    const isQuotaError = e.message?.includes("quota") || e.status === 429;
-    console.warn(`⚠️ Step 1 (Gemini 2.0) failed: ${isQuotaError ? 'Quota Reached' : e.message}`);
+    lastError = e.message?.includes("location") ? "Regional AI restriction" : (e.message?.includes("quota") ? "AI Busy (Quota)" : e.message || "Gemini 2.0 error");
+    console.warn(`⚠️ Step 1 (Gemini 2.0) failed: ${lastError}`);
 
     // OPTIONAL: Try Gemini 1.5 Flash as a secondary AI attempt
     console.log("💎 Step 1.5: Attempting Gemini 1.5 Flash (Fallback AI)...");
@@ -70,7 +81,7 @@ async function extractFromImage(base64Image, mediaType) {
           {
             role: "user",
             parts: [
-              { inlineData: { data: base64Image, mimeType: mediaType } },
+              { inlineData: { data: optimizedBase64, mimeType: 'image/jpeg' } },
               { text: "Extract all medicine brand and generic names. Return ONLY a JSON array of strings." }
             ]
           }
@@ -85,18 +96,19 @@ async function extractFromImage(base64Image, mediaType) {
       console.log(`✅ Gemini 1.5 Extraction Success: ${medicines.length} found.`);
       return { medicines, method: "Gemini 1.5 Vision" };
     } catch (e15) {
-      console.warn("⚠️ Step 1.5 (Gemini 1.5) also failed:", e15.message);
+      lastError = e15.message?.includes("location") ? "Regional AI restriction" : (e15.message?.includes("quota") ? "AI Busy (Quota)" : e15.message || "Gemini 1.5 error");
+      console.warn("⚠️ Step 1.5 (Gemini 1.5) also failed:", lastError);
     }
 
     // 2nd PRIORITY: Groq Vision Fallback
     console.log("🌪️ Step 2: Attempting Groq Vision fallback...");
     try {
-      const groqMedicines = await extractFromImageGroq(base64Image, mediaType);
+      const groqMedicines = await extractFromImageGroq(optimizedBase64, 'image/jpeg');
       console.log(`✅ Groq Extraction Success: ${groqMedicines.length} found.`);
       return { 
         medicines: groqMedicines, 
         method: "Groq Vision", 
-        warning: "Vision fallback active. Accuracy may vary." 
+        warning: `Checking backup AI (${lastError})`
       };
     } catch (groqError) {
       console.warn("⚠️ Step 2 (Groq) failed:", groqError.message);
@@ -104,18 +116,18 @@ async function extractFromImage(base64Image, mediaType) {
       // 3rd PRIORITY (The Safety Net): Local OCR + AI Refinement
       console.log("🛡️ Step 3: Resorting to Local OCR + AI Refinement...");
       try {
-        const rawOcrText = await extractFromImageLocal(base64Image, mediaType);
+        const rawOcrText = await extractFromImageLocal(optimizedBase64, 'image/jpeg');
         console.log(`📄 Step 3a (OCR) complete (${rawOcrText.length} chars). Refining names...`);
         const refined = await refineOcrResults(rawOcrText);
         console.log(`✅ Step 3b (Refinement) success: ${refined.length} found.`);
         return { 
           medicines: refined, 
           method: "Local OCR", 
-          warning: "Regional vision restriction detected. Local OCR fallback active." 
+          warning: `Local extraction active (${lastError})`
         };
       } catch (ocrError) {
         console.error("❌ Step 3 (OCR) failed:", ocrError.message);
-        throw new Error("Unable to extract medicine names. All engines failed.");
+        throw new Error(`Unable to extract medicine names. Final error: ${lastError}`);
       }
     }
   }
