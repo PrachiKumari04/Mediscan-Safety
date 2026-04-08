@@ -9,6 +9,29 @@ const { extractFromImageLocal } = require('./ocr');
 const isMock = !process.env.GEMINI_API_KEY;
 const ai = isMock ? null : new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+/**
+ * Universal normalization helper to ensure we always return a flat array of strings.
+ * Handles cases where AI returns { "medicines": [...] } or raw [...]
+ */
+function normalizeMedicines(data) {
+  if (!data) return [];
+  
+  // If it's already a flat array, just return it
+  if (Array.isArray(data)) {
+    return data.map(m => (typeof m === 'string' ? m : (m.name || JSON.stringify(m)))).filter(Boolean);
+  }
+  
+  // If it's an object with a medicines/list key
+  if (typeof data === 'object') {
+    const list = data.medicines || data.list || data.names || Object.values(data).find(Array.isArray);
+    if (list && Array.isArray(list)) {
+      return normalizeMedicines(list); // Recursive call to clean the inner array
+    }
+  }
+  
+  return ["Unknown Medicine"];
+}
+
 async function extractFromImage(base64Image, mediaType) {
   if (isMock) return { medicines: ["Paracetamol", "Ibuprofen"], method: "Mock Data" };
 
@@ -31,7 +54,8 @@ async function extractFromImage(base64Image, mediaType) {
         temperature: 0 // Keep it deterministic for extraction
       }
     });
-    const medicines = JSON.parse(response.text);
+    const rawResult = JSON.parse(response.text);
+    const medicines = normalizeMedicines(rawResult);
     return { medicines, method: "Gemini 2.0 Vision" };
   } catch (e) {
     console.warn("⚠️ Gemini Vision failed:", e.message);
@@ -101,8 +125,7 @@ async function refineOcrResults(rawOcrText) {
       }
     });
     const result = JSON.parse(response.text);
-    // Handle cases where AI returns { "medicines": [...] } instead of raw array
-    return Array.isArray(result) ? result : (result.medicines || ["Unknown Medicine"]);
+    return normalizeMedicines(result);
   } catch (e) {
     console.warn("⚠️ Gemini Refinement failed, trying Groq fallback...");
     try {

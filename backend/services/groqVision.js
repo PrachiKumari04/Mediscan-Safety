@@ -40,7 +40,17 @@ async function extractFromImageGroq(base64Image, mediaType) {
     // Attempt to parse JSON. Sometimes LLMs return { "medicines": [...] } or just [...]
     try {
       const parsed = JSON.parse(content);
-      return Array.isArray(parsed) ? parsed : (parsed.medicines || []);
+      // Universal normalization: extract array from any object shape
+      const normalize = (data) => {
+        if (Array.isArray(data)) return data.map(m => typeof m === 'string' ? m : (m.name || JSON.stringify(m)));
+        if (typeof data === 'object') {
+          const list = data.medicines || data.list || data.names || Object.values(data).find(Array.isArray);
+          return list ? normalize(list) : ["Unknown Medicine"];
+        }
+        return ["Unknown Medicine"];
+      };
+      
+      return normalize(parsed);
     } catch (e) {
       // Fallback: search for array-like pattern if JSON.parse fails
       const match = content.match(/\[.*\]/s);

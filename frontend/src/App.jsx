@@ -38,11 +38,17 @@ function App() {
       
       const res = await axios.post(`${API_URL}/extract-medicines`, formData);
       if (res.data.medicines) {
-        setMedicines(res.data.medicines);
+        // Frontend safety: ensure we have an array of strings
+        const raw = res.data.medicines;
+        const normalized = Array.isArray(raw) ? raw : (raw.medicines || raw.list || []);
+        setMedicines(normalized.map(m => typeof m === 'string' ? m : (m.name || "Unknown")));
+        
         if (res.data.warning) {
           setStatus({ type: 'warning', message: res.data.warning });
+        } else if (normalized.length === 0) {
+          setStatus({ type: 'warning', message: "No medicines identified. Please try a clearer photo." });
         } else {
-          setStatus({ type: 'success', message: `Extracted ${res.data.medicines.length} medicines.` });
+          setStatus({ type: 'success', message: `Extracted ${normalized.length} medicines.` });
         }
       }
     } catch (err) {
