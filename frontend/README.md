@@ -1,6 +1,8 @@
-# React + Vite
+# 🩺 Mediscan Safety Checker (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mediscan-safety.vercel.app/)
+
+This is the frontend for the Mediscan Safety Checker, built with React and Vite.
 
 Currently, two official plugins are available:
 
