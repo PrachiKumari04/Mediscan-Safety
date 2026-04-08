@@ -3,9 +3,14 @@
 
 <div align="center">
 
-![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-0284c7?style=for-the-badge&logo=vercel&logoColor=white)](https://mediscan-safety.vercel.app/)
 
+<br>
 
+![Powered By Gemini & Groq](https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-0284c7.svg?style=flat-square)
+![License MIT](https://img.shields.io/badge/License-MIT-d97706.svg?style=flat-square)
+
+</div>
 
 ---
 
@@ -97,5 +102,3 @@ Then start both servers with `npm run dev` in their respective folders.
 
 ## ⚠️ Disclaimer
 **For Informational Purposes Only.** Mediscan is an AI Proof of Concept (POC). **NEVER** use this as a substitute for professional medical advice. Always consult a doctor before taking any medication.
-
-
