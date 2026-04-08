@@ -7,9 +7,6 @@
 
 <br>
 
-![Powered By Gemini & Groq](https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-0284c7.svg?style=flat-square)
-![License MIT](https://img.shields.io/badge/License-MIT-d97706.svg?style=flat-square)
-
 </div>
 
 ---
