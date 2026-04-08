@@ -1,3 +1,7 @@
+/**
+ * Mediscan AI Service - Extraction Refinement Engine
+ * Last Deployment Build: 2026-04-08T12:08:00Z
+ */
 const { GoogleGenAI } = require('@google/genai');
 const { extractFromImageGroq } = require('./groqVision');
 const { extractFromImageLocal } = require('./ocr');
@@ -6,88 +10,109 @@ const isMock = !process.env.GEMINI_API_KEY;
 const ai = isMock ? null : new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 async function extractFromImage(base64Image, mediaType) {
-  if (isMock) {
-    return ["Paracetamol", "Ibuprofen"]; // Default fallback only if no API key
-  }
+  if (isMock) return ["Paracetamol", "Ibuprofen"];
 
+  // 1st PRIORITY: Gemini 2.0 Flash (Vision)
+  console.log("💎 Attempting Gemini 2.0 Flash Vision...");
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash', // Note: User region might only support 1.5-flash for vision
       contents: [
         {
           role: "user",
           parts: [
             { inlineData: { data: base64Image, mimeType: mediaType } },
-            { text: "Extract all medicine brand and generic names from this photo of tablet, strip, or handwritten prescription. Return exact JSON array of strings e.g. [\"Medicine A\", \"Medicine B\"]." }
+            { text: "Extract all medicine brand and generic names. Return exactly JSON array of strings: [\"Name A\", \"Name B\"]." }
           ]
         }
       ],
-      config: {
-        responseMimeType: "application/json",
-      }
+      config: { responseMimeType: "application/json" }
     });
-
     return JSON.parse(response.text);
   } catch (e) {
-    console.warn("⚠️ API Error during Gemini image extraction:");
-    console.error({
-      status: e.status,
-      message: e.message
-    });
-    
-    // FAIL-SAFE 1: If Gemini is overloaded (429) or down (500/503), OR location restricted (400)
-    // Try Groq Vision
-    console.log("🔄 Attempting Groq Vision fallback...");
+    console.warn("⚠️ Gemini Vision failed.");
+    const isLocationError = e.message?.includes("location") || e.status === 400;
+    const isQuotaError = e.message?.includes("quota") || e.status === 429;
+
+    if (isQuotaError) {
+      throw new Error("Gemini API limit reached. Please wait 60s or use Groq fallback.");
+    }
+
+    // 2nd PRIORITY: Groq Vision Fallback
+    console.log("🌪️ Attempting Groq Vision fallback...");
     try {
       const groqMedicines = await extractFromImageGroq(base64Image, mediaType);
-      console.log("✅ Groq fallback extraction successful:", groqMedicines);
       return groqMedicines;
     } catch (groqError) {
-      console.warn("⚠️ Groq fallback also failed or unavailable:", groqError.message);
+      console.warn("⚠️ Groq Vision also failed.");
       
-      // FAIL-SAFE 2: Local OCR (Works without Internet/Location restrictions)
-      console.log("🔄 Attempting Local OCR fallback (Tesseract)...");
+      // 3rd PRIORITY (The Safety Net): Local OCR + AI Refinement
+      console.log("🛡️ Resorting to Local OCR + AI Refinement...");
       try {
         const rawOcrText = await extractFromImageLocal(base64Image, mediaType);
-        console.log("📄 Raw OCR Text received. Refining with AI...");
-        const refinedMedicines = await refineOcrResults(rawOcrText);
-        console.log("✅ Refined OCR extraction successful:", refinedMedicines);
-        return refinedMedicines;
+        return await refineOcrResults(rawOcrText);
       } catch (ocrError) {
-        console.error("❌ All extraction methods failed:", ocrError.message);
-        throw new Error("Medicine extraction failed. Please type names manually.");
+        console.error("❌ All extraction methods failed.");
+        throw new Error("Unable to extract medicine names. Please type them manually for safety.");
       }
     }
   }
 }
 
-async function refineOcrResults(rawTextLines) {
-  if (isMock) return rawTextLines;
+const { analyzeInteractionsGroq } = require('./groq');
+
+async function refineOcrResults(rawOcrText) {
+  if (isMock) return ["Paracetamol"];
   
-  const rawText = Array.isArray(rawTextLines) ? rawTextLines.join(", ") : rawTextLines;
-  const prompt = `You are a medical data cleaner. I have raw, noisy OCR text from a medicine bottle: "${rawText}".
-  TASK: Identify and return only the specific medicine brand or generic names (e.g., 'Paracetamol', 'Lipitor').
-  STRICT RULES:
-  1. Fix obvious OCR typos.
-  2. REMOVE and IGNORE noise: "500MG", "DATE", "EXPIRY", "TABLET", "QTY", "MFG".
-  3. REMOVE and IGNORE classifications: "ANTIPYRETIC", "ANALGESIC", "ANTIBIOTIC".
-  4. REMOVE and IGNORE fragments like "PANO", "OMG", "ESIC" unless they are part of a valid name.
-  5. If no valid medicine name is found, return ["Unknown Medicine"].
-  Return the result as a JSON array of strings: ["Medicine A", "Medicine B"].`;
+  const prompt = `You are a specialized medical OCR correction assistant. 
+  I have raw, messy OCR text from a medicine bottle:
+  ---
+  ${rawOcrText}
+  ---
+  TASK: 
+  1. Identify any likely medicine brand or generic names.
+  2. Use your medical knowledge to "unscramble" noisy fragments. 
+     (Example: If you see "MIE" near "850mg", it is likely "METFORMIN").
+     (Example: If you see "P4R4C3TAM0L", it is "PARACETAMOL").
+  3. Ignore pure noise like barcodes, dates, or manufacturer addresses.
+  4. Return a JSON array of strings: ["Name 1", "Name 2"].
+  5. If no real medicine name can be confidently inferred, return ["Unknown Medicine"].`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Use 1.5-flash for reliability/speed in text tasks
+      model: 'gemini-1.5-flash',
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text);
   } catch (e) {
-    console.error("Refinement Error:", e.message);
-    // If refinement fails, return the original noisy text rather than failing entirely,
-    // but filter it slightly to avoid extreme junk.
-    return (Array.isArray(rawTextLines) ? rawTextLines : [rawTextLines]).slice(0, 5);
+    console.warn("⚠️ Gemini Refinement failed, trying Groq fallback...");
+    try {
+      return await refineOcrResultsGroq(rawOcrText);
+    } catch (groqErr) {
+      console.error("❌ All refinement methods failed.");
+      return ["Unknown Medicine"];
+    }
   }
+}
+
+async function refineOcrResultsGroq(rawOcrText) {
+  const Groq = require('groq-sdk');
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  
+  const prompt = `Based on this noisy medical OCR text, identify the specific medicine names. 
+  Unscramble errors (e.g., MIE -> METFORMIN). 
+  Text: "${rawOcrText}"
+  Return ONLY a JSON array of strings.`;
+
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
+  });
+
+  const content = JSON.parse(completion.choices[0].message.content);
+  return Array.isArray(content) ? content : (content.medicines || ["Unknown Medicine"]);
 }
 
 async function analyzeInteractionsGemini(drugData, language = 'English') {

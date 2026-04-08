@@ -38,9 +38,14 @@ function App() {
         setMedicines(res.data.medicines);
       }
     } catch (err) {
-      console.error(err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to extract medicines from image.';
-      alert('Extraction failed: ' + errorMessage);
+      console.error("Extraction Error Detail:", err);
+      const isQuota = err.response?.data?.error?.includes("limit") || err.message?.includes("limit");
+      
+      if (isQuota) {
+        alert("📊 API Limit Reached: The free-tier Gemini limit has been met. Please wait 60 seconds and try again, or type names manually.");
+      } else {
+        alert("⚠️ Extraction Notice: Direct AI vision is currently restricted in your region. The app will automatically try local OCR fallback. Please verify the names below.");
+      }
     } finally {
       setLoading(false);
     }
