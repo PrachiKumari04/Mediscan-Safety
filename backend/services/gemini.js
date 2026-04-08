@@ -10,13 +10,13 @@ const isMock = !process.env.GEMINI_API_KEY;
 const ai = isMock ? null : new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 async function extractFromImage(base64Image, mediaType) {
-  if (isMock) return ["Paracetamol", "Ibuprofen"];
+  if (isMock) return { medicines: ["Paracetamol", "Ibuprofen"], method: "Mock Data" };
 
   // 1st PRIORITY: Gemini 2.0 Flash (Vision)
   console.log("💎 Attempting Gemini 2.0 Flash Vision...");
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Note: User region might only support 1.5-flash for vision
+      model: 'gemini-1.5-flash', // Note: Increased compatibility for vision tasks
       contents: [
         {
           role: "user",
@@ -28,21 +28,25 @@ async function extractFromImage(base64Image, mediaType) {
       ],
       config: { responseMimeType: "application/json" }
     });
-    return JSON.parse(response.text);
+    return { medicines: JSON.parse(response.text), method: "Gemini Vision" };
   } catch (e) {
-    console.warn("⚠️ Gemini Vision failed.");
+    console.warn("⚠️ Gemini Vision failed:", e.message);
     const isLocationError = e.message?.includes("location") || e.status === 400;
     const isQuotaError = e.message?.includes("quota") || e.status === 429;
 
     if (isQuotaError) {
-      throw new Error("Gemini API limit reached. Please wait 60s or use Groq fallback.");
+      throw new Error("Gemini API limit reached. Please wait 60s.");
     }
 
     // 2nd PRIORITY: Groq Vision Fallback
     console.log("🌪️ Attempting Groq Vision fallback...");
     try {
       const groqMedicines = await extractFromImageGroq(base64Image, mediaType);
-      return groqMedicines;
+      return { 
+        medicines: groqMedicines, 
+        method: "Groq Vision", 
+        warning: "Vision fallback active. Accuracy may vary." 
+      };
     } catch (groqError) {
       console.warn("⚠️ Groq Vision also failed.");
       
@@ -50,10 +54,15 @@ async function extractFromImage(base64Image, mediaType) {
       console.log("🛡️ Resorting to Local OCR + AI Refinement...");
       try {
         const rawOcrText = await extractFromImageLocal(base64Image, mediaType);
-        return await refineOcrResults(rawOcrText);
+        const refined = await refineOcrResults(rawOcrText);
+        return { 
+          medicines: refined, 
+          method: "Local OCR", 
+          warning: "Regional vision restriction detected. Local OCR fallback active." 
+        };
       } catch (ocrError) {
         console.error("❌ All extraction methods failed.");
-        throw new Error("Unable to extract medicine names. Please type them manually for safety.");
+        throw new Error("Unable to extract medicine names. Please type them manually.");
       }
     }
   }

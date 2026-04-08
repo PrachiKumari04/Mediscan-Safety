@@ -10,8 +10,9 @@ async function test() {
   let medicines = ["Paracetamol", "Ibuprofen"]; // Default for safety test
   try {
     const mockImage = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
-    medicines = await extractFromImage(mockImage, "image/png");
-    console.log("✅ Extraction successful:", medicines);
+    const result = await extractFromImage(mockImage, "image/png");
+    medicines = result.medicines;
+    console.log(`✅ Extraction successful (via ${result.method}):`, medicines);
   } catch (err) {
     console.warn("⚠️ Extraction test failed (likely rate limit):", err.message);
     console.log("Proceeding with default medicines for Groq test...");

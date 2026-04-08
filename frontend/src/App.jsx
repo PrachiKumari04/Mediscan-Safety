@@ -4,6 +4,7 @@ import InputPanel from './components/InputPanel';
 import MedicineList from './components/MedicineList';
 import SafetyCard from './components/SafetyCard';
 import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2 } from 'lucide-react';
+import StatusBanner from './components/StatusBanner';
 
 // Connect to backend
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -15,6 +16,7 @@ function App() {
   const [language, setLanguage] = useState('English');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [status, setStatus] = useState(null); // { type: 'loading' | 'success' | 'warning' | 'error', message: string }
 
   // Pre-load voices for TTS
   useEffect(() => {
@@ -29,6 +31,7 @@ function App() {
   const handleExtraction = async (file) => {
     setLoading(true);
     setReport(null);
+    setStatus({ type: 'loading', message: 'Analyzing image...' });
     try {
       const formData = new FormData();
       formData.append('image', file);
@@ -36,15 +39,20 @@ function App() {
       const res = await axios.post(`${API_URL}/extract-medicines`, formData);
       if (res.data.medicines) {
         setMedicines(res.data.medicines);
+        if (res.data.warning) {
+          setStatus({ type: 'warning', message: res.data.warning });
+        } else {
+          setStatus({ type: 'success', message: `Extracted ${res.data.medicines.length} medicines.` });
+        }
       }
     } catch (err) {
       console.error("Extraction Error Detail:", err);
       const isQuota = err.response?.data?.error?.includes("limit") || err.message?.includes("limit");
       
       if (isQuota) {
-        alert("📊 API Limit Reached: The free-tier Gemini limit has been met. Please wait 60 seconds and try again, or type names manually.");
+        setStatus({ type: 'error', message: "API Limit Reached. Please wait 60s." });
       } else {
-        alert("⚠️ Extraction Notice: Direct AI vision is currently restricted in your region. The app will automatically try local OCR fallback. Please verify the names below.");
+        setStatus({ type: 'warning', message: "Using fallback extraction. Please verify names." });
       }
     } finally {
       setLoading(false);
@@ -54,12 +62,14 @@ function App() {
   const handleCheckSafety = async () => {
     if (medicines.length === 0) return;
     setLoading(true);
+    setStatus({ type: 'loading', message: 'Analyzing safety...' });
     try {
       const res = await axios.post(`${API_URL}/check-safety`, { medicines, language });
       setReport(res.data);
+      setStatus(null);
     } catch (err) {
       console.error(err);
-      alert('Failed to check safety.');
+      setStatus({ type: 'error', message: 'Failed to check safety.' });
     } finally {
       setLoading(false);
     }
@@ -179,6 +189,8 @@ function App() {
             </select>
           </div>
           
+          <StatusBanner status={status} />
+
           <InputPanel 
             onImageExtracted={handleExtraction} 
             onAddManual={(med) => setMedicines([...medicines, med])} 

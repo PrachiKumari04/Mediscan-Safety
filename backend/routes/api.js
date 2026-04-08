@@ -15,8 +15,8 @@ router.post('/extract-medicines', upload.single('image'), async (req, res) => {
     const base64Image = req.file.buffer.toString('base64');
     const mediaType = req.file.mimetype;
     
-    const medicines = await extractFromImage(base64Image, mediaType);
-    res.json({ medicines });
+    const result = await extractFromImage(base64Image, mediaType);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Extraction failed' });
