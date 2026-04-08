@@ -58,7 +58,7 @@ function App() {
       if (isQuota) {
         setStatus({ type: 'warning', message: "AI Busy. Retrying with backup engine..." });
       } else {
-        setStatus({ type: 'warning', message: "Using fallback extraction. Please verify results." });
+        setStatus({ type: 'error', message: "Could not read label. Try better light or typing names." });
       }
     } finally {
       setLoading(false);

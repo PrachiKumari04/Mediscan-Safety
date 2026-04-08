@@ -56,39 +56,40 @@ async function extractFromImage(base64Image, mediaType) {
     });
     const rawResult = JSON.parse(response.text);
     const medicines = normalizeMedicines(rawResult);
+    console.log(`✅ Gemini Extraction Success: ${medicines.length} found.`);
     return { medicines, method: "Gemini 2.0 Vision" };
   } catch (e) {
-    console.warn("⚠️ Gemini Vision failed (potentially quota or region):", e.message);
     const isQuotaError = e.message?.includes("quota") || e.status === 429;
-
-    // Even if it's a quota error, we DO NOT throw. We move to the next fallback engine.
-    console.log(isQuotaError ? "📊 Gemini Limit Reached. Switching to expert backup..." : "📍 Regional restriction. Switching to expert backup...");
+    console.warn(`⚠️ Step 1 (Gemini) failed: ${isQuotaError ? 'Quota Reached' : e.message}`);
 
     // 2nd PRIORITY: Groq Vision Fallback
-    console.log("🌪️ Attempting Groq Vision fallback...");
+    console.log("🌪️ Step 2: Attempting Groq Vision fallback...");
     try {
       const groqMedicines = await extractFromImageGroq(base64Image, mediaType);
+      console.log(`✅ Groq Extraction Success: ${groqMedicines.length} found.`);
       return { 
         medicines: groqMedicines, 
         method: "Groq Vision", 
         warning: "Vision fallback active. Accuracy may vary." 
       };
     } catch (groqError) {
-      console.warn("⚠️ Groq Vision also failed.");
+      console.warn("⚠️ Step 2 (Groq) failed:", groqError.message);
       
       // 3rd PRIORITY (The Safety Net): Local OCR + AI Refinement
-      console.log("🛡️ Resorting to Local OCR + AI Refinement...");
+      console.log("🛡️ Step 3: Resorting to Local OCR + AI Refinement...");
       try {
         const rawOcrText = await extractFromImageLocal(base64Image, mediaType);
+        console.log(`📄 Step 3a (OCR) complete (${rawOcrText.length} chars). Refining names...`);
         const refined = await refineOcrResults(rawOcrText);
+        console.log(`✅ Step 3b (Refinement) success: ${refined.length} found.`);
         return { 
           medicines: refined, 
           method: "Local OCR", 
           warning: "Regional vision restriction detected. Local OCR fallback active." 
         };
       } catch (ocrError) {
-        console.error("❌ All extraction methods failed.");
-        throw new Error("Unable to extract medicine names. Please type them manually.");
+        console.error("❌ Step 3 (OCR) failed:", ocrError.message);
+        throw new Error("Unable to extract medicine names. All engines failed.");
       }
     }
   }

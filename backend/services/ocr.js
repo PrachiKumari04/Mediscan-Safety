@@ -15,9 +15,12 @@ async function extractFromImageLocal(base64Image, mediaType) {
     const langPath = path.join(__dirname, '..'); 
     
     const { data: { text } } = await Tesseract.recognize(buffer, 'eng', {
-      gzip: false, // Ensure it doesn't try to download gzipped versions
+      gzip: false,
       langPath: langPath,
-      logger: m => console.log(`[OCR] ${m.status}: ${Math.round(m.progress * 100)}%`)
+      logger: m => console.log(`[OCR] ${m.status}: ${Math.round(m.progress * 100)}%`),
+      // Medical labels are often complex; these settings help preserve structure
+      init_oem: 1, // Neural nets LSTM only
+      tessedit_pageseg_mode: 3, // Fully automatic page segmentation, but no OSD
     });
 
     console.log("📄 Raw OCR Text Extracted (Local).");
