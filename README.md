@@ -1,11 +1,7 @@
 # 🩺 Mediscan Safety Checker
 > **Intelligent Medicine Companion powered by Dual-Engine AI.**
 
-<div align="center">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
-  <img src="https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-blue.svg?style=flat-square" alt="Powered By Gemini & Groq">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License MIT">
-</div>
+
 
 ---
 
