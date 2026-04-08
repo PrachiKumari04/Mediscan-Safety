@@ -56,9 +56,9 @@ function App() {
       const isQuota = err.response?.data?.error?.includes("limit") || err.message?.includes("limit");
       
       if (isQuota) {
-        setStatus({ type: 'error', message: "API Limit Reached. Please wait 60s." });
+        setStatus({ type: 'warning', message: "AI Busy. Retrying with backup engine..." });
       } else {
-        setStatus({ type: 'warning', message: "Using fallback extraction. Please verify names." });
+        setStatus({ type: 'warning', message: "Using fallback extraction. Please verify results." });
       }
     } finally {
       setLoading(false);

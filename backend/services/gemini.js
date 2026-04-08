@@ -58,13 +58,11 @@ async function extractFromImage(base64Image, mediaType) {
     const medicines = normalizeMedicines(rawResult);
     return { medicines, method: "Gemini 2.0 Vision" };
   } catch (e) {
-    console.warn("⚠️ Gemini Vision failed:", e.message);
-    const isLocationError = e.message?.includes("location") || e.status === 400;
+    console.warn("⚠️ Gemini Vision failed (potentially quota or region):", e.message);
     const isQuotaError = e.message?.includes("quota") || e.status === 429;
 
-    if (isQuotaError) {
-      throw new Error("Gemini API limit reached. Please wait 60s.");
-    }
+    // Even if it's a quota error, we DO NOT throw. We move to the next fallback engine.
+    console.log(isQuotaError ? "📊 Gemini Limit Reached. Switching to expert backup..." : "📍 Regional restriction. Switching to expert backup...");
 
     // 2nd PRIORITY: Groq Vision Fallback
     console.log("🌪️ Attempting Groq Vision fallback...");
