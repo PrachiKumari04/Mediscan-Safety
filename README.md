@@ -1,8 +1,17 @@
 # 🩺 Mediscan Safety Checker
 > **Intelligent Medicine Companion powered by Dual-Engine AI.**
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mediscan-safety.vercel.app/)
 
+<div align="center">
 
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mediscan-safety.vercel.app/)
+
+<br>
+
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)
+![Powered By Gemini & Groq](https://img.shields.io/badge/Powered%20By-Gemini%20%26%20Groq-blue.svg?style=flat-square)
+![License MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
+
+</div>
 
 ---
 
