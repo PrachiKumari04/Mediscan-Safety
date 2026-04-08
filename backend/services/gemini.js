@@ -100,19 +100,17 @@ const { analyzeInteractionsGroq } = require('./groq');
 async function refineOcrResults(rawOcrText) {
   if (isMock) return ["Paracetamol"];
   
-  const prompt = `You are a specialized medical OCR correction assistant. 
-  I have raw, messy OCR text from a medicine bottle:
-  ---
-  ${rawOcrText}
-  ---
-  TASK: 
-  1. Identify any likely medicine brand or generic names.
-  2. Use your medical knowledge to "unscramble" noisy fragments. 
-     (Example: If you see "MIE" near "850mg", it is likely "METFORMIN").
-     (Example: If you see "P4R4C3TAM0L", it is "PARACETAMOL").
-  3. Ignore pure noise like barcodes, dates, or manufacturer addresses.
-  4. Return a JSON array of strings: ["Name 1", "Name 2"].
-  5. If no real medicine name can be confidently inferred, return ["Unknown Medicine"].`;
+  const prompt = `System: You are an expert medical OCR auditor.
+  Task: Identify specific medicine names from this raw OCR text.
+  
+  OCR DATA:
+  "${rawOcrText}"
+  
+  RULES:
+  1. ONLY identify medicines that strictly match the text fragments.
+  2. DO NOT invent or guess common medicines (e.g., Metformin, Insulin) unless they are clearly visible in the text.
+  3. If the text is pure noise or unreadable, return [].
+  4. Return ONLY a flat JSON array of strings: ["Name 1", "Name 2"].`;
 
   try {
     const response = await ai.models.generateContent({
@@ -140,10 +138,15 @@ async function refineOcrResultsGroq(rawOcrText) {
   const Groq = require('groq-sdk');
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
   
-  const prompt = `Based on this noisy medical OCR text, identify the specific medicine names. 
-  Unscramble errors (e.g., MIE -> METFORMIN). 
-  Text: "${rawOcrText}"
-  Return ONLY a JSON array of strings.`;
+  const prompt = `System: You are an expert medical OCR auditor.
+  Task: Identify specific medicine names from this noisy text.
+  
+  Instruction: 
+  - ONLY extract names that you are 90% sure are present. 
+  - DO NOT invent or guess common medicines if the text is unreadable.
+  - Return ONLY a JSON array of strings.
+  
+  Text: "${rawOcrText}"`;
 
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",

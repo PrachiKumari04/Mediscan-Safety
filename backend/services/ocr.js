@@ -1,20 +1,28 @@
 const Tesseract = require('tesseract.js');
 const path = require('path');
+const sharp = require('sharp');
 
 /**
  * Local OCR fallback using Tesseract.js
- * Configured to use local training data for restricted environments
+ * Optimized with Sharp preprocessing to handle handwritten prescriptions.
  */
 async function extractFromImageLocal(base64Image, mediaType) {
-  console.log("⚙️ Starting local OCR extraction (Tesseract.js - Local Mode)...");
+  console.log("⚙️ Starting optimized OCR extraction...");
   
   try {
-    const buffer = Buffer.from(base64Image, 'base64');
+    // PRE-PROCESSING: Convert to grayscale and boost contrast
+    // This helps Tesseract distinguish ink from paper in handwritten shots
+    const rawBuffer = Buffer.from(base64Image, 'base64');
+    const processedBuffer = await sharp(rawBuffer)
+      .grayscale()
+      .normalize() // Boosts contrast
+      .sharpen()
+      .toBuffer();
     
     // Path to the directory containing eng.traineddata
     const langPath = path.join(__dirname, '..'); 
     
-    const { data: { text } } = await Tesseract.recognize(buffer, 'eng', {
+    const { data: { text } } = await Tesseract.recognize(processedBuffer, 'eng', {
       gzip: false,
       langPath: langPath,
       logger: m => console.log(`[OCR] ${m.status}: ${Math.round(m.progress * 100)}%`),
