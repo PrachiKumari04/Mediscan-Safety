@@ -35,7 +35,7 @@ function normalizeMedicines(data) {
 const { prepareImageForAI } = require('./image');
 
 async function extractFromImage(base64Image, mediaType) {
-  if (isMock) return { medicines: ["Paracetamol", "Ibuprofen"], method: "Mock Data" };
+  if (isMock) return { medicines: [], method: "Offline Mode" };
 
   // OPTIMIZATION: Compress and sharpen image before sending to any API
   // This helps avoid 400 errors from oversized payloads and improves AI accuracy.
@@ -136,7 +136,7 @@ async function extractFromImage(base64Image, mediaType) {
 const { analyzeInteractionsGroq } = require('./groq');
 
 async function refineOcrResults(rawOcrText) {
-  if (isMock) return ["Paracetamol"];
+  if (isMock) return [];
   
   const prompt = `System: You are an expert medical OCR auditor.
   Task: Identify specific medicine names from this raw OCR text.

@@ -21,7 +21,7 @@ async function extractFromImageGroq(base64Image, mediaType) {
           content: [
             {
               type: "text",
-              text: "System: You are an expert medical OCR assistant. \nTask: Extract all medicine brand names and generic names from this image. \nInstruction: Return ONLY a JSON array of strings e.g. [\"Paracetamol\", \"Metformin\"]. No chat or markdown."
+              text: "System: You are an expert medical OCR assistant. \nTask: Extract all medicine brand names and generic names from this image. \nInstruction: Return ONLY a JSON array of strings e.g. [\"Medicine 1\", \"Medicine 2\"]. No chat or markdown."
             },
             {
               type: "image_url",

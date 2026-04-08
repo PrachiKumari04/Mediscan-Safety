@@ -6,21 +6,23 @@ const sharp = require('sharp');
  */
 async function prepareImageForAI(base64Image) {
   try {
+    if (!base64Image) return base64Image;
     const buffer = Buffer.from(base64Image, 'base64');
     
-    // We aim for around 1000px width which is plenty for OCR while being lightweight
+    // FAIL-SAFE: If buffer is tiny or invalid, don't even try sharp
+    if (buffer.length < 100) return base64Image;
+
     const processedBuffer = await sharp(buffer)
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
       .grayscale()
       .normalize()
-      .sharpen()
       .jpeg({ quality: 80 }) 
       .toBuffer();
       
     return processedBuffer.toString('base64');
   } catch (err) {
-    console.warn("⚠️ Image compression failed, using original:", err.message);
-    return base64Image;
+    console.error("⚠️ Sharp Pre-processing failed (Process continues):", err.message);
+    return base64Image; // Return original on ANY error to prevent crash
   }
 }
 
