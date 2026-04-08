@@ -44,7 +44,8 @@ function App() {
         setMedicines(normalized.map(m => typeof m === 'string' ? m : (m.name || "Unknown")));
         
         if (res.data.warning) {
-          setStatus({ type: 'warning', message: res.data.warning });
+          const friendlyWarning = typeof res.data.warning === 'string' ? res.data.warning : "AI Fallback active";
+          setStatus({ type: 'warning', message: friendlyWarning });
         } else if (normalized.length === 0) {
           setStatus({ type: 'warning', message: "No medicines identified. Please try a clearer photo." });
         } else {

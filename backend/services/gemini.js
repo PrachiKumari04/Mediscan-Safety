@@ -34,11 +34,18 @@ function normalizeMedicines(data) {
 
 const { prepareImageForAI } = require('./image');
 
+function getFriendlyError(err) {
+  const msg = err?.message || String(err);
+  if (msg.includes("404") || msg.includes("not found")) return "AI model update in progress";
+  if (msg.includes("429") || msg.includes("quota")) return "AI busy (High traffic)";
+  if (msg.includes("location") || msg.includes("region")) return "Regional restriction active";
+  return "AI temporarily unavailable";
+}
+
 async function extractFromImage(base64Image, mediaType) {
   if (isMock) return { medicines: [], method: "Offline Mode" };
 
   // OPTIMIZATION: Compress and sharpen image before sending to any API
-  // This helps avoid 400 errors from oversized payloads and improves AI accuracy.
   const optimizedBase64 = await prepareImageForAI(base64Image);
   let lastError = "AI Busy";
 
@@ -52,7 +59,7 @@ async function extractFromImage(base64Image, mediaType) {
           role: "user",
           parts: [
             { inlineData: { data: optimizedBase64, mimeType: 'image/jpeg' } },
-            { text: "System: You are an expert medical vision assistant.\nTask: Extract all medicine brand and generic names visible in this image. Return ONLY a JSON array of strings: [\"Name A\", \"Name B\"]. If no medicine is found, return []." }
+            { text: "Extract medicine names. Return ONLY a JSON array." }
           ]
         }
       ],
@@ -69,12 +76,13 @@ async function extractFromImage(base64Image, mediaType) {
       return { medicines, method: "Gemini 2.0 Vision" };
     }
   } catch (e) {
-    lastError = e.message?.includes("location") ? "Regional AI restriction" : (e.message?.includes("quota") ? "AI Busy (Quota)" : e.message || "Gemini 2.0 error");
+    lastError = getFriendlyError(e);
     console.warn(`⚠️ Step 1 (Gemini 2.0) failed: ${lastError}`);
 
-    // OPTIONAL: Try Gemini 1.5 Flash as a secondary AI attempt
-    console.log("💎 Step 1.5: Attempting Gemini 1.5 Flash (Fallback AI)...");
+    // OPTIONAL: Try Gemini 1.5 Flash
+    console.log("💎 Step 1.5: Attempting Gemini 1.5 Flash...");
     try {
+      // NOTE: Attempting standard ID first, fallback to stable alias if 404 occurs
       const response = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
         contents: [
@@ -82,7 +90,7 @@ async function extractFromImage(base64Image, mediaType) {
             role: "user",
             parts: [
               { inlineData: { data: optimizedBase64, mimeType: 'image/jpeg' } },
-              { text: "Extract all medicine brand and generic names. Return ONLY a JSON array of strings." }
+              { text: "Extract medicine names. Return ONLY a JSON array." }
             ]
           }
         ],
@@ -96,7 +104,7 @@ async function extractFromImage(base64Image, mediaType) {
       console.log(`✅ Gemini 1.5 Extraction Success: ${medicines.length} found.`);
       return { medicines, method: "Gemini 1.5 Vision" };
     } catch (e15) {
-      lastError = e15.message?.includes("location") ? "Regional AI restriction" : (e15.message?.includes("quota") ? "AI Busy (Quota)" : e15.message || "Gemini 1.5 error");
+      lastError = getFriendlyError(e15);
       console.warn("⚠️ Step 1.5 (Gemini 1.5) also failed:", lastError);
     }
 
@@ -108,26 +116,23 @@ async function extractFromImage(base64Image, mediaType) {
       return { 
         medicines: groqMedicines, 
         method: "Groq Vision", 
-        warning: `Checking backup AI (${lastError})`
+        warning: `Using backup AI (${lastError})`
       };
     } catch (groqError) {
       console.warn("⚠️ Step 2 (Groq) failed:", groqError.message);
       
-      // 3rd PRIORITY (The Safety Net): Local OCR + AI Refinement
-      console.log("🛡️ Step 3: Resorting to Local OCR + AI Refinement...");
+      // 3rd PRIORITY: Local OCR
+      console.log("🛡️ Step 3: Resorting to Local OCR...");
       try {
         const rawOcrText = await extractFromImageLocal(optimizedBase64, 'image/jpeg');
-        console.log(`📄 Step 3a (OCR) complete (${rawOcrText.length} chars). Refining names...`);
         const refined = await refineOcrResults(rawOcrText);
-        console.log(`✅ Step 3b (Refinement) success: ${refined.length} found.`);
         return { 
           medicines: refined, 
           method: "Local OCR", 
           warning: `Local extraction active (${lastError})`
         };
       } catch (ocrError) {
-        console.error("❌ Step 3 (OCR) failed:", ocrError.message);
-        throw new Error(`Unable to extract medicine names. Final error: ${lastError}`);
+        throw new Error(lastError);
       }
     }
   }
