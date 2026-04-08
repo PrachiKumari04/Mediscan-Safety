@@ -54,13 +54,39 @@ async function extractFromImage(base64Image, mediaType) {
         temperature: 0 // Keep it deterministic for extraction
       }
     });
-    const rawResult = JSON.parse(response.text);
     const medicines = normalizeMedicines(rawResult);
-    console.log(`✅ Gemini Extraction Success: ${medicines.length} found.`);
+    console.log(`✅ Gemini 2.0 Extraction Success: ${medicines.length} found.`);
     return { medicines, method: "Gemini 2.0 Vision" };
   } catch (e) {
     const isQuotaError = e.message?.includes("quota") || e.status === 429;
-    console.warn(`⚠️ Step 1 (Gemini) failed: ${isQuotaError ? 'Quota Reached' : e.message}`);
+    console.warn(`⚠️ Step 1 (Gemini 2.0) failed: ${isQuotaError ? 'Quota Reached' : e.message}`);
+
+    // OPTIONAL: Try Gemini 1.5 Flash as a secondary AI attempt
+    console.log("💎 Step 1.5: Attempting Gemini 1.5 Flash (Fallback AI)...");
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { inlineData: { data: base64Image, mimeType: mediaType } },
+              { text: "Extract all medicine brand and generic names. Return ONLY a JSON array of strings." }
+            ]
+          }
+        ],
+        config: { 
+          responseMimeType: "application/json",
+          temperature: 0 
+        }
+      });
+      const rawResult = JSON.parse(response.text);
+      const medicines = normalizeMedicines(rawResult);
+      console.log(`✅ Gemini 1.5 Extraction Success: ${medicines.length} found.`);
+      return { medicines, method: "Gemini 1.5 Vision" };
+    } catch (e15) {
+      console.warn("⚠️ Step 1.5 (Gemini 1.5) also failed:", e15.message);
+    }
 
     // 2nd PRIORITY: Groq Vision Fallback
     console.log("🌪️ Step 2: Attempting Groq Vision fallback...");

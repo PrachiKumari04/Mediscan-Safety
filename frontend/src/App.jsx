@@ -48,7 +48,7 @@ function App() {
         } else if (normalized.length === 0) {
           setStatus({ type: 'warning', message: "No medicines identified. Please try a clearer photo." });
         } else {
-          setStatus({ type: 'success', message: `Extracted ${normalized.length} medicines.` });
+          setStatus({ type: 'success', message: `Extracted ${normalized.length} medicines via ${res.data.method}.` });
         }
       }
     } catch (err) {
