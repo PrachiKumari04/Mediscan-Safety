@@ -171,7 +171,7 @@ function App() {
   return (
     <div className="container animate-fade-in">
       <div className="header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
           <h1 style={{ marginBottom: 0 }}><span style={{ color: 'var(--success)' }}>Medi</span>scan Safety</h1>
         </div>
         <p>Your intelligent medicine companion</p>
