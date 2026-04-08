@@ -3,7 +3,7 @@
 
 <div align="center">
 
-[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)]
+![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 
 
