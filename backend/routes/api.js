@@ -11,6 +11,7 @@ router.post('/extract-medicines', upload.single('image'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No image provided' });
     }
+    console.log(`📸 Image received: ${req.file.originalname} (${req.file.size} bytes, ${req.file.mimetype})`);
     const base64Image = req.file.buffer.toString('base64');
     const mediaType = req.file.mimetype;
     

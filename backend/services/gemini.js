@@ -1,5 +1,6 @@
 const { GoogleGenAI } = require('@google/genai');
 const { extractFromImageGroq } = require('./groqVision');
+const { extractFromImageLocal } = require('./ocr');
 
 const isMock = !process.env.GEMINI_API_KEY;
 const ai = isMock ? null : new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -28,22 +29,64 @@ async function extractFromImage(base64Image, mediaType) {
 
     return JSON.parse(response.text);
   } catch (e) {
-    console.warn("API Error during Gemini image extraction.", e.status, e.message);
+    console.warn("⚠️ API Error during Gemini image extraction:");
+    console.error({
+      status: e.status,
+      message: e.message
+    });
     
-    // FAIL-SAFE: If Gemini is overloaded (429) or down (500/503), switch to Groq Vision!
-    if (e.status === 429 || e.status >= 500 || (e.message && (e.message.includes('429') || e.message.includes('503')))) {
-      console.log("🔄 Gemini limit reached/unavailable. Switching to Groq Vision fallback...");
+    // FAIL-SAFE 1: If Gemini is overloaded (429) or down (500/503), OR location restricted (400)
+    // Try Groq Vision
+    console.log("🔄 Attempting Groq Vision fallback...");
+    try {
+      const groqMedicines = await extractFromImageGroq(base64Image, mediaType);
+      console.log("✅ Groq fallback extraction successful:", groqMedicines);
+      return groqMedicines;
+    } catch (groqError) {
+      console.warn("⚠️ Groq fallback also failed or unavailable:", groqError.message);
+      
+      // FAIL-SAFE 2: Local OCR (Works without Internet/Location restrictions)
+      console.log("🔄 Attempting Local OCR fallback (Tesseract)...");
       try {
-        return await extractFromImageGroq(base64Image, mediaType);
-      } catch (groqError) {
-        throw new Error("Both Gemini and Groq Vision are currently unavailable. Please type medicines manually.");
+        const rawOcrText = await extractFromImageLocal(base64Image, mediaType);
+        console.log("📄 Raw OCR Text received. Refining with AI...");
+        const refinedMedicines = await refineOcrResults(rawOcrText);
+        console.log("✅ Refined OCR extraction successful:", refinedMedicines);
+        return refinedMedicines;
+      } catch (ocrError) {
+        console.error("❌ All extraction methods failed:", ocrError.message);
+        throw new Error("Medicine extraction failed. Please type names manually.");
       }
     }
-    
-    if (e.status === 404) {
-      throw new Error("Model not found on this API key. Trying with typing manually.");
-    }
-    throw new Error("Failed to extract medicines. The AI service may be temporarily unavailable.");
+  }
+}
+
+async function refineOcrResults(rawTextLines) {
+  if (isMock) return rawTextLines;
+  
+  const rawText = Array.isArray(rawTextLines) ? rawTextLines.join(", ") : rawTextLines;
+  const prompt = `You are a medical data cleaner. I have raw, noisy OCR text from a medicine bottle: "${rawText}".
+  TASK: Identify and return only the specific medicine brand or generic names (e.g., 'Paracetamol', 'Lipitor').
+  STRICT RULES:
+  1. Fix obvious OCR typos.
+  2. REMOVE and IGNORE noise: "500MG", "DATE", "EXPIRY", "TABLET", "QTY", "MFG".
+  3. REMOVE and IGNORE classifications: "ANTIPYRETIC", "ANALGESIC", "ANTIBIOTIC".
+  4. REMOVE and IGNORE fragments like "PANO", "OMG", "ESIC" unless they are part of a valid name.
+  5. If no valid medicine name is found, return ["Unknown Medicine"].
+  Return the result as a JSON array of strings: ["Medicine A", "Medicine B"].`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash', // Use 1.5-flash for reliability/speed in text tasks
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { responseMimeType: "application/json" }
+    });
+    return JSON.parse(response.text);
+  } catch (e) {
+    console.error("Refinement Error:", e.message);
+    // If refinement fails, return the original noisy text rather than failing entirely,
+    // but filter it slightly to avoid extreme junk.
+    return (Array.isArray(rawTextLines) ? rawTextLines : [rawTextLines]).slice(0, 5);
   }
 }
 

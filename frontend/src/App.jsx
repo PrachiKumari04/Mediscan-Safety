@@ -39,11 +39,8 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      if (err.response && err.response.data && err.response.data.error) {
-        alert('Extraction failed: ' + err.response.data.error);
-      } else {
-        alert('Failed to extract medicines from image. Please try again.');
-      }
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to extract medicines from image.';
+      alert('Extraction failed: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,6 +106,8 @@ function App() {
     // Helper to find and set the best voice
     const setVoice = () => {
       const voices = window.speechSynthesis.getVoices();
+      console.log("🔊 Available Voices:", voices.map(v => `${v.name} (${v.lang})`));
+      
       // Try exact match first
       let voice = voices.find(v => v.lang.replace('_', '-') === targetLang);
       
@@ -118,12 +117,15 @@ function App() {
       }
       
       // For regional languages, sometimes Google provides specific high-quality voices
-      if (!voice && targetLang === 'hi-IN') voice = voices.find(v => v.name.includes("Hindi"));
-      if (!voice && targetLang === 'mr-IN') voice = voices.find(v => v.name.includes("Marathi"));
-      if (!voice && targetLang === 'ta-IN') voice = voices.find(v => v.name.includes("Tamil"));
+      if (!voice && targetLang === 'hi-IN') voice = voices.find(v => v.name.includes("Hindi") || v.name.includes("hi-IN"));
+      if (!voice && targetLang === 'mr-IN') voice = voices.find(v => v.name.includes("Marathi") || v.name.includes("mr-IN"));
+      if (!voice && targetLang === 'ta-IN') voice = voices.find(v => v.name.includes("Tamil") || v.name.includes("ta-IN"));
 
       if (voice) {
+        console.log(`✅ Selected Voice: ${voice.name} (${voice.lang})`);
         utterance.voice = voice;
+      } else {
+        console.warn(`⚠️ No specific voice found for ${targetLang}. Using browser default for this language.`);
       }
     };
 
