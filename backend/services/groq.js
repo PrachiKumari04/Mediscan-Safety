@@ -132,4 +132,32 @@ async function analyzeInteractions(drugData, language = 'English') {
   }
 }
 
-module.exports = { analyzeInteractions };
+async function getMedicineInfo(medicine, language = 'English') {
+  if (!process.env.GROQ_API_KEY) {
+     return { uses: "AI Service Offline", dosage: "Consult doctor", sideEffects: "Unknown" };
+  }
+  const prompt = `You are a helpful pharmacist. The patient is asking about the medicine "${medicine}".
+Provide a VERY SIMPLE, clear, patient-facing summary in ${language}. 
+Use 10-year-old level language. Keep it brief.
+
+Return STRICTLY as a JSON object:
+{
+  "uses": "What it is used for",
+  "dosage": "How it is normally taken",
+  "sideEffects": "Common side effects"
+}`;
+  
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" }
+    });
+    return JSON.parse(chatCompletion.choices[0].message.content);
+  } catch (e) {
+    console.error("Groq medicine-info error:", e);
+    return { uses: "Info unavailable", dosage: "Consult doctor", sideEffects: "Unknown" };
+  }
+}
+
+module.exports = { analyzeInteractions, getMedicineInfo };

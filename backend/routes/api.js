@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const { extractFromImage } = require('../services/gemini');
 const { checkSafety } = require('../services/safety'); // Orchestration service
+const { getMedicineInfo } = require('../services/groq');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -34,6 +35,18 @@ router.post('/check-safety', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Safety check failed' });
+  }
+});
+
+router.post('/medicine-info', async (req, res) => {
+  try {
+    const { medicine, language } = req.body;
+    if (!medicine) return res.status(400).json({ error: 'No medicine provided' });
+    const result = await getMedicineInfo(medicine, language || 'English');
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Medicine Info check failed' });
   }
 });
 

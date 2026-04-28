@@ -3,7 +3,7 @@ import axios from 'axios';
 import InputPanel from './components/InputPanel';
 import MedicineList from './components/MedicineList';
 import SafetyCard from './components/SafetyCard';
-import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2, Sun, Moon } from 'lucide-react';
 import StatusBanner from './components/StatusBanner';
 
 // Connect to backend
@@ -17,6 +17,18 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'loading' | 'success' | 'warning' | 'error', message: string }
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   // Pre-load voices for TTS
   useEffect(() => {
@@ -169,12 +181,27 @@ function App() {
   };
 
   return (
-    <div className="container animate-fade-in">
-      <div className="header">
-        <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-          <h1 style={{ marginBottom: 0 }}><span style={{ color: 'var(--success)' }}>Medi</span>scan Safety</h1>
+    <div className="container animate-fade-in" style={{ position: 'relative' }}>
+      <button 
+        onClick={toggleTheme}
+        className="btn btn-outline"
+        style={{ position: 'absolute', top: '1rem', right: '1rem', padding: '0.75rem', borderRadius: '50%', zIndex: 50 }}
+        aria-label="Toggle Dark Mode"
+      >
+        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+      </button>
+
+      <div className="hero-section animate-fade-in">
+        <div className="hero-badge">
+          <ShieldCheck size={18} />
+          <span>AI-Powered Medical Safety</span>
         </div>
-        <p>Your intelligent medicine companion</p>
+        <h1 className="hero-title">
+          <span>Medi</span>scan Safety
+        </h1>
+        <p className="hero-subtitle">
+          Your intelligent medicine companion. Instantly check side effects, interactions, and safety profiles using advanced AI.
+        </p>
       </div>
 
       {!report ? (
@@ -208,6 +235,7 @@ function App() {
               <h3 className="mb-4">Medicines to Check</h3>
               <MedicineList 
                 medicines={medicines} 
+                language={language}
                 onRemove={(index) => setMedicines(medicines.filter((_, i) => i !== index))} 
               />
               

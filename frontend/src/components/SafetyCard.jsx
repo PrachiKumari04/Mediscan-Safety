@@ -58,9 +58,9 @@ function SafetyCard({ report, onListen, onPause, onStop, isSpeaking, isPaused })
                 const reason = typeof alt === 'string' ? null : alt.reason;
 
                 return (
-                  <div key={i} className="suggestion-tag flex flex-col items-start gap-1">
-                    <div className="flex items-center justify-between w-full">
-                      <span style={{ fontWeight: 600 }}>{name}</span>
+                  <div key={i} className="suggestion-tag">
+                    <div className="flex items-center justify-between w-full" style={{ marginBottom: reason ? '0.5rem' : '0' }}>
+                      <span style={{ fontWeight: 600, fontSize: '1.05rem' }}>{name}</span>
                       {type && <span className="alt-type">{type}</span>}
                     </div>
                     {reason && <span className="alt-reason">{reason}</span>}
